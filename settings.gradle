@@ -1,0 +1,2 @@
+rootProject.name='WC Web Camera Control'
+include ':app'
