@@ -4,7 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class BabaikaNotification extends BabaikaItem {
-    private static String BLE_STATE_UUID = "uuid";
+    private static final String BLE_STATE_UUID = "uuid";
 
     private String uuid;
     protected String value;

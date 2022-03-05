@@ -8,7 +8,7 @@ public class BabaikaBLEDevice {
     static String uuid = "31a29e42-bfb2-431c-8dcf-0e6e3c2c080e";
     static String BLEDEVICE_ICO = "ic_ble_device";
 
-    private ArrayList<BabaikaItem> items = new ArrayList<>();
+    private final ArrayList<BabaikaItem> items = new ArrayList<>();
 
     BabaikaBLEDevice() {
         //
@@ -31,30 +31,27 @@ public class BabaikaBLEDevice {
         for (BabaikaItem notification : items) {
             if (notification instanceof BabaikaNotification) {
                 if (((BabaikaNotification)notification).getUUID().equals(chid)) {
-                    //return new BabaikaNotification(chid, notification.getPicture());
                     Class<? extends BabaikaItem> cl = notification.getClass();
                     try {
                         Constructor[] ctors = cl.getDeclaredConstructors();
                         Constructor ctor = null;
-                        for (int i = 0; i < ctors.length; i++) {
-                            ctor = ctors[i];
+                        for (Constructor constructor : ctors) {
+                            ctor = constructor;
                             if (ctor.getGenericParameterTypes().length == 0)
                                 break;
                         }
-                        ctor.setAccessible(true);
-                        BabaikaNotification c = (BabaikaNotification) ctor.newInstance();
-                        c.restoreState(notification.saveState());
-                        return c;
-                        // production code should handle these exceptions more gracefully
-                    } catch (InstantiationException x) {
-                        x.printStackTrace();
-                    } catch (InvocationTargetException x) {
-                        x.printStackTrace();
-                    } catch (IllegalAccessException x) {
+                        if (ctor != null) {
+                            ctor.setAccessible(true);
+                            BabaikaNotification c = (BabaikaNotification) ctor.newInstance();
+                            c.restoreState(notification.saveState());
+                            return c;
+                        } else
+                            return null;
+                    } catch (InstantiationException | InvocationTargetException | IllegalAccessException x) {
                         x.printStackTrace();
                     }
                 }
-            }
+            } else
             if (notification instanceof BabaikaNotiCommand) {
                 if (((BabaikaNotiCommand)notification).getNoti().getUUID().equals(chid)) {
                     //return new BabaikaNotification(chid, notification.getPicture());
@@ -62,21 +59,19 @@ public class BabaikaBLEDevice {
                     try {
                         Constructor[] ctors = cl.getDeclaredConstructors();
                         Constructor ctor = null;
-                        for (int i = 0; i < ctors.length; i++) {
-                            ctor = ctors[i];
+                        for (Constructor constructor : ctors) {
+                            ctor = constructor;
                             if (ctor.getGenericParameterTypes().length == 0)
                                 break;
                         }
-                        ctor.setAccessible(true);
-                        BabaikaNotiCommand c = (BabaikaNotiCommand) ctor.newInstance();
-                        c.restoreState(notification.saveState());
-                        return c;
-                        // production code should handle these exceptions more gracefully
-                    } catch (InstantiationException x) {
-                        x.printStackTrace();
-                    } catch (InvocationTargetException x) {
-                        x.printStackTrace();
-                    } catch (IllegalAccessException x) {
+                        if (ctor != null) {
+                            ctor.setAccessible(true);
+                            BabaikaNotiCommand c = (BabaikaNotiCommand) ctor.newInstance();
+                            c.restoreState(notification.saveState());
+                            return c;
+                        } else
+                            return null;
+                    } catch (InstantiationException | InvocationTargetException | IllegalAccessException x) {
                         x.printStackTrace();
                     }
                 }
@@ -85,8 +80,8 @@ public class BabaikaBLEDevice {
         return null;
     }
 
-    void put(String aKey, String aCommand, String aPicture, boolean aRepeatable) {
-        items.add(new BabaikaCommand(aKey, aCommand, aPicture, aRepeatable));
+    void put(String aKey, String aCommand, String aComment, String aPicture, boolean aRepeatable) {
+        items.add(new BabaikaCommand(aKey, aCommand, aComment, aPicture, aRepeatable));
     }
     void put(BabaikaCommand cmd) {
         items.add(cmd);
@@ -99,9 +94,9 @@ public class BabaikaBLEDevice {
     void putNoti(BabaikaNotification notification) {
         items.add(notification);
     }
-    void putCommNoti(String aKey, String aCommand, String aPicture, boolean aRepeatable,
+    void putCommNoti(String aKey, String aCommand, String aComment, String aPicture, boolean aRepeatable,
                      BabaikaNotification notification) {
-        BabaikaNotiCommand item = new BabaikaNotiCommand(aKey, aCommand, aPicture, aRepeatable);
+        BabaikaNotiCommand item = new BabaikaNotiCommand(aKey, aCommand, aComment, aPicture, aRepeatable);
         item.setNotification(notification);
         items.add(item);
     }

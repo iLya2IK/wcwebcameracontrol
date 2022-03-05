@@ -8,18 +8,18 @@ import java.util.UUID;
 
 public class SampleGattAttributes {
 
-    private static HashMap<String, Class<? extends BabaikaBLEDevice>> write_attributes = new HashMap();
-    private static HashMap<String, Class<? extends BabaikaBLEDevice>> read_attributes = new HashMap();
-    private static HashMap<String, Class<? extends BabaikaBLEDevice>> device_classes = new HashMap();
+    private final static HashMap<String, Class<? extends BabaikaBLEDevice>> write_attributes = new HashMap();
+    private final static HashMap<String, Class<? extends BabaikaBLEDevice>> read_attributes = new HashMap();
+    private final static HashMap<String, Class<? extends BabaikaBLEDevice>> device_classes = new HashMap();
     static final UUID CLIENT_CHARACTERISTIC_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-    private static String MAIN_SERVICE[] = {"00009ef0-0000-1000-8000-00805f9b34fb"};
-    private static String BT_WCWEBCAM_CFG_CHAR = "00009ef1-0000-1000-8000-00805f9b34fb";
-    static String BT_WCWEBCAM_NOTI_CHAR1 = "00009ef2-0000-1000-8000-00805f9b34fb";
+    private final static String[] MAIN_SERVICE = {"00009ef0-0000-1000-8000-00805f9b34fb"};
+    private final static String BT_WEBCAM_CFG_CHAR = "00009ef1-0000-1000-8000-00805f9b34fb";
+    static String BT_WEBCAM_NOTI_CHAR1 = "00009ef2-0000-1000-8000-00805f9b34fb";
     static String BLE_NAME_PREFIX = "babaika";
 
     static {
-        write_attributes.put(BT_WCWEBCAM_CFG_CHAR,  BabaikaWebCam.class);
-        read_attributes.put(BT_WCWEBCAM_NOTI_CHAR1, BabaikaWebCam.class);
+        write_attributes.put(BT_WEBCAM_CFG_CHAR,  BabaikaWebCam.class);
+        read_attributes.put(BT_WEBCAM_NOTI_CHAR1, BabaikaWebCam.class);
 
         device_classes.put(BabaikaWebCam.uuid, BabaikaWebCam.class);
     }

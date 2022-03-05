@@ -10,58 +10,132 @@ import org.json.JSONObject;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import static android.content.Context.MODE_PRIVATE;
 
 public class DeviceItem implements Comparable<DeviceItem> {
-    private static final String BLE_PREF_CACHED_DB = "db";
-    private static final String BLE_PREF_CACHED_LIST = "CachedList";
-    private static final String CACHE_ITEM_DEVICE_SERVER_NAME = "device_server_name";
-    private static final String CACHE_ITEM_DEVICE_BLE_NAME = "device_name";
-    private static final String CACHE_ITEM_DEVICE_BLE_ADDRESS = "device_address";
-    private static final String CACHE_ITEM_RATE = "rate";
-    private static final String CACHE_ITEM_TIME_STAMP = "timestamp";
-    private static final String CACHE_ITEMS = "items";
+    public static final int DEFAULT_DEVICE_COLOR = 0xffaaaaaa;
 
-    private BLEDevice fDevice;
-    private Context mContext;
+    private static final String DEVICE_ITEM_SERVER_NAME = "server_name";
+    private static final String DEVICE_ITEM_BLE_NAME = "ble_name";
+    private static final String DEVICE_ITEM_BLE_ADDRESS = "ble_address";
+    private static final String DEVICE_ITEM_CHAR = "char";
+    private static final String DEVICE_ITEM_COLOR = "color";
+    private static final String DEVICE_ITEM_INDEX = "index";
+    private static final String DEVICE_ITEM_RATE = "rate";
+    private static final String DEVICE_ITEM_TIME_STAMP = "timestamp";
+
     private Timestamp mTimeStamp;
     private long mRate;
 
-    DeviceItem(Context aContext, BluetoothDevice device, long aRate) {
+    private Context mContext;
+    private BluetoothDevice device = null;
+    private boolean mIsBLEConnected = false;
+    private boolean mIsOnline = false;
+    private String bleName = "";
+    private String bleAddress = "";
+    private String mServerName = "";
+    private String mDeviceWriteChar = "";
+    private String mDevicePicture = "";
+    private int mDevicePictureID;
+    private int mDeviceColor = DEFAULT_DEVICE_COLOR;
+    private int mDeviceIndex = 0;    
+
+    DeviceItem(Context aContext) {
         mContext = aContext;
-        fDevice = new BLEDevice(aContext, device);
-        mRate = aRate;
         synchronizeTime();
     }
 
-    DeviceItem(Context aContext, String aDeviceName, String aDeviceAddress, long aRate) {
+    DeviceItem(Context aContext, JSONObject obj) {
         mContext = aContext;
-        fDevice = new BLEDevice(aContext, aDeviceName, aDeviceAddress);
-        mRate = aRate;
+        restoreState(obj.toString());
         synchronizeTime();
     }
 
-    DeviceItem(Context aContext, JSONObject cached_item) {
-        mContext = aContext;
-        restoreState(cached_item);
-        synchronizeTime();
+    boolean isSame(DeviceItem it) {
+        return ((device == it.device) &&
+                (mServerName.equals(it.mServerName))&&
+                (bleAddress.equals(it.bleAddress))&&
+                (bleName.equals(it.bleName))&&
+                (mRate == it.mRate)&&
+                (mDeviceIndex == it.mDeviceIndex)&&
+                (mDeviceColor == it.mDeviceColor)&&
+                (mDevicePicture.equals(it.mDevicePicture))&&
+                (mDevicePictureID == it.mDevicePictureID)&&
+                (mDeviceWriteChar.equals(it.mDeviceWriteChar))&&
+                (mIsOnline == it.mIsOnline));
     }
 
-    DeviceItem(Context aContext, String obj) {
-        mContext = aContext;
-        restoreState(obj);
-        synchronizeTime();
+    boolean updateFromResult(DeviceItem adevice) {
+        if (this == adevice) return false;
+        boolean cmpRes = !isSame(adevice);
+        if (cmpRes) {
+            restoreState(adevice.saveState());
+
+            device = adevice.device;
+            mIsOnline = adevice.isOnline();
+            synchronizeTime();
+        }
+        return cmpRes;
+    }
+
+    void complete(String deviceServerName,
+                  String deviceBLEName,
+                  String deviceBLEAddress) {
+        if (deviceServerName.length() > 0)
+            mServerName = deviceServerName;
+        if (deviceBLEAddress.length() > 0)
+            bleAddress = deviceBLEAddress;
+        if (deviceBLEName.length() > 0)
+            bleName = deviceBLEName;
+        updateSecondaryValues();
+    }
+
+    boolean tryToCompleteFrom(DeviceItem an_device,
+                               String deviceServerName,
+                               String deviceBLEName,
+                               String deviceBLEAddress) {
+        if ((an_device.bleAddress.equals(deviceBLEAddress) && (deviceBLEAddress.length() > 0)) ||
+                (an_device.mServerName.equals(deviceServerName) && (deviceServerName.length() > 0))) {
+            if (deviceServerName.length() > 0)
+                mServerName = deviceServerName;
+            if (deviceBLEAddress.length() > 0)
+                bleAddress = deviceBLEAddress;
+            if (deviceBLEName.length() > 0)
+                bleName = deviceBLEName;
+            if (this != an_device) {
+                mDeviceWriteChar = an_device.mDeviceWriteChar;
+                mDeviceColor = an_device.mDeviceColor;
+                mDeviceIndex = an_device.mDeviceIndex;
+                mRate = an_device.mRate;
+                device = an_device.device;
+                mIsOnline = an_device.isOnline();
+                if (deviceServerName.length() == 0)
+                    mServerName = an_device.mServerName;
+                if (deviceBLEAddress.length() == 0)
+                    bleAddress = an_device.bleAddress;
+                if (deviceBLEName.length() == 0)
+                    bleName = an_device.bleName;
+                updateSecondaryValues();
+            }
+            return true;
+        }
+        return false;
     }
 
     String saveState() {
         try {
             JSONObject cached_item = new JSONObject();
-            cached_item.put(CACHE_ITEM_DEVICE_SERVER_NAME, fDevice.getServerName());
-            cached_item.put(CACHE_ITEM_DEVICE_BLE_NAME, fDevice.getBLEName());
-            cached_item.put(CACHE_ITEM_DEVICE_BLE_ADDRESS, fDevice.getBLEAddress());
-            cached_item.put(CACHE_ITEM_RATE, mRate);
-            cached_item.put(CACHE_ITEM_TIME_STAMP, mTimeStamp.toString());
+            cached_item.put(DEVICE_ITEM_SERVER_NAME, mServerName);
+            cached_item.put(DEVICE_ITEM_BLE_NAME, bleName);
+            cached_item.put(DEVICE_ITEM_BLE_ADDRESS, bleAddress);
+            cached_item.put(DEVICE_ITEM_CHAR, mDeviceWriteChar);
+            cached_item.put(DEVICE_ITEM_COLOR, mDeviceColor);
+            cached_item.put(DEVICE_ITEM_INDEX, mDeviceIndex);
+            cached_item.put(DEVICE_ITEM_RATE, mRate);
+            cached_item.put(DEVICE_ITEM_TIME_STAMP, mTimeStamp.toString());
             return cached_item.toString();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -80,67 +154,69 @@ public class DeviceItem implements Comparable<DeviceItem> {
 
     void restoreState(JSONObject cached_item) {
         try {
-            String aDeviceName = cached_item.getString(CACHE_ITEM_DEVICE_BLE_NAME);
-            String aDeviceAddress = cached_item.getString(CACHE_ITEM_DEVICE_BLE_ADDRESS);
-            String aServerName = cached_item.getString(CACHE_ITEM_DEVICE_SERVER_NAME);
-            mRate = cached_item.getLong(CACHE_ITEM_RATE);
-            mTimeStamp = Timestamp.valueOf(cached_item.getString(CACHE_ITEM_TIME_STAMP));
+            bleName = cached_item.getString(DEVICE_ITEM_BLE_NAME);
+            bleAddress = cached_item.getString(DEVICE_ITEM_BLE_ADDRESS);
+            mServerName = cached_item.getString(DEVICE_ITEM_SERVER_NAME);
+            mDeviceWriteChar = cached_item.getString(DEVICE_ITEM_CHAR);
+            mDeviceIndex = cached_item.getInt(DEVICE_ITEM_INDEX);
+            mDeviceColor = cached_item.getInt(DEVICE_ITEM_COLOR);
+            mRate = cached_item.getLong(DEVICE_ITEM_RATE);
 
-            fDevice = new BLEDevice(mContext, aServerName, aDeviceName, aDeviceAddress);
+            updateSecondaryValues();
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     public boolean equals(DeviceItem other) {
-        return other.getDeviceBLEAddress().equals(fDevice.getBLEAddress());
-    }
-
-    static ArrayList<DeviceItem> loadFromDB(Context aContext) {
-        ArrayList<DeviceItem> resList = new ArrayList<>();
-        SharedPreferences sp = aContext.getSharedPreferences(BLE_PREF_CACHED_DB, MODE_PRIVATE);
-        String res = sp.getString(BLE_PREF_CACHED_LIST, null);
-        if (res != null) {
-            try {
-                JSONObject cached_list = new JSONObject(res);
-                JSONArray items = cached_list.getJSONArray(CACHE_ITEMS);
-                for (int i = 0; i < items.length();i++) {
-                    JSONObject obj = items.getJSONObject(i);
-                    resList.add(new DeviceItem(aContext, obj));
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        if ((other.getDeviceBLEAddress().length() > 0) &&
+            (bleAddress.length() > 0)) {
+            return other.getDeviceBLEAddress().equals(bleAddress);
+        } else
+        if (mServerName.length() > 0)
+        {
+            return other.getDeviceServerName().equals(mServerName);
         }
-        return resList;
+        return false;
     }
 
-    static void saveToDB(Context aContext, ArrayList<DeviceItem> cachedList) {
-        SharedPreferences sp = aContext.getSharedPreferences(BLE_PREF_CACHED_DB, MODE_PRIVATE);
-        SharedPreferences.Editor spEd = sp.edit();
-        spEd.remove(BLE_PREF_CACHED_LIST);
-        JSONObject cached_list = new JSONObject();
-        JSONArray items = new JSONArray();
-        try {
-            for (int i = 0; i < cachedList.size(); i++) {
-                JSONObject obj = new JSONObject(cachedList.get(i).saveState());
-                items.put(obj);
+    void updateSecondaryValues() {
+        mDevicePicture = SampleGattAttributes.getCharPicture(mDeviceWriteChar);
+        mDevicePictureID = defineDevicePictureID(mContext, mDevicePicture);
+    }
+
+    static int defineDevicePictureID(Context aContext, String aPicName) {
+        int resID;
+        if (aPicName != null) {
+            resID = aContext.getResources().getIdentifier(aPicName, "drawable", aContext.getPackageName());
+            if (resID == 0) {
+                resID = R.drawable.ic_ble_device;
             }
-            cached_list.put(CACHE_ITEMS, items);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        spEd.putString(BLE_PREF_CACHED_LIST, cached_list.toString());
-        spEd.apply();
+        } else resID = R.drawable.ic_ble_device;
+        return resID;
     }
 
-
-    String getDeviceBLEAddress() {return fDevice.getBLEAddress();}
-    String getDeviceServerName() {return fDevice.getServerName();}
-    String getDeviceWriteChar() {return fDevice.getDeviceWriteChar();}
-    BLEDevice getDevice() {return  fDevice;}
-    String getDeviceBLEName() {return  fDevice.getBLEName();}
+    BluetoothDevice getDevice() {return device;}
+    String getDeviceBLEAddress() {return bleAddress;}
+    String getDeviceServerName() {return mServerName;}
+    String getDeviceWriteChar() {return mDeviceWriteChar;}
+    int getDeviceItemColor() {return mDeviceColor;}
+    int getDeviceItemIndex() {return mDeviceIndex;}
+    String getDeviceBLEName() {return  bleName;}
     Timestamp getTimeStamp() { return mTimeStamp; }
+    int getDevicePictureID() {
+        return mDevicePictureID;
+    }
+
+    boolean isBLEAvaible() {return (device != null);}
+    boolean isBLEConnected() {return mIsBLEConnected;}
+    boolean isOnline() {return mIsOnline;}
+    void BLEConnect() {mIsBLEConnected = true;}
+    void BLEDisconnect() {mIsBLEConnected = false;}
+    void setOnline(boolean state) {mIsOnline = state;}
+    void setBLEDevice(BluetoothDevice dev) {device = dev;}
+
+    
     long getRate() {return mRate;}
     void incRate() {
         long time = System.currentTimeMillis();
@@ -161,6 +237,14 @@ public class DeviceItem implements Comparable<DeviceItem> {
     @Override
     public int compareTo(DeviceItem o) {
         return (int) (o.getRate() - mRate);
+    }
+
+    boolean hasBLEAddress() {
+        return (bleAddress.length() > 0);
+    }
+
+    boolean hasServerName() {
+        return (mServerName.length() > 0);
     }
 
 }
