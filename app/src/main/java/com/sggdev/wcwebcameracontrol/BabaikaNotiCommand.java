@@ -17,12 +17,7 @@ public class BabaikaNotiCommand extends BabaikaCommand {
     BabaikaNotiCommand(String aKey, String aCommand, String aComment, String aPicture, boolean aRepeatable) {
         super(aKey, aCommand, aComment, aPicture, aRepeatable);
         noti = null;
-        mOnValueChangedListener = new OnValueChangedListener() {
-            @Override
-            public void onChange() {
-                setPicture(noti.getPicture());
-            }
-        };
+        mOnValueChangedListener = () -> setPicture(noti.getPicture());
     }
 
     void setOnValueChangedListener(OnValueChangedListener listener) {

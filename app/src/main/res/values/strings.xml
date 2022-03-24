@@ -23,23 +23,27 @@
     <string name="hostname_title">Host name</string>
     <string name="username_title">User name</string>
     <string name="password_title">Password</string>
+    <string name="device_name_title">Device name</string>
     <string name="title_activity_main_config">MainConfigActivity</string>
 
-    <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
-
-    <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
-
-    <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="rest_error">REST error code (%d) - %s</string>
     <string name="alert_edit_config">Unable to connect to the server. Check the user settings. Edit the configuration?</string>
     <string name="alert_refused_connection">Refused connection</string>
+    <string name="no_details">no details</string>
+    <string name="details_prefix">\n\nDetails:\n</string>
+    <string name="disconnect_user">Disconnect user</string>
+    <string name="disconnect_request">Do you want to disable the client connection to the server?</string>
+    <string name="default_from_account">Set from account config</string>
+    <string name="title_activity_device_chat">DeviceChatActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="enter_command">Enter Command</string>
+    <string name="send">Send</string>
 </resources>

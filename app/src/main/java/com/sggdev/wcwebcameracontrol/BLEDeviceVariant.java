@@ -66,7 +66,7 @@ public class BLEDeviceVariant implements Comparable<BLEDeviceVariant> {
             return (int) (variant - o.variant);
         } else {
             if ((item != null) && (o.item != null)) {
-                return (int) (o.item.getRate() - item.getRate());
+                return (int) (o.item.compareTo(item));
             } else
                 return 0;
         }

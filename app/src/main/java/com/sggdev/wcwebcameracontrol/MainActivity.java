@@ -1,5 +1,6 @@
 package com.sggdev.wcwebcameracontrol;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -19,17 +20,16 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,28 +37,21 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.json.*;
-
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.BLUETOOTH;
@@ -67,73 +60,77 @@ import static android.Manifest.permission.INTERNET;
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.makeMeasureSpec;
 
+import static com.sggdev.wcwebcameracontrol.BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM;
+import static com.sggdev.wcwebcameracontrol.BLEDeviceVariant.DEVICE_VARIANT_DEVICE;
+import static com.sggdev.wcwebcameracontrol.BLEDeviceVariant.DEVICE_VARIANT_SERVER_ITEM;
+import static com.sggdev.wcwebcameracontrol.DeviceItem.DEFAULT_DEVICE_COLOR;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_ADDRESS;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_HOST_NAME;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_INDEX;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
+import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_CONNECTED;
+import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED;
+import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED_BY_USER;
+import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_USER_CFG_INCORRECT;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.*;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 public class MainActivity extends AppCompatActivity {
     private static final int STATE_DEVICE_LISTING = 0;
     private static final int STATE_DEVICE_CONFIG = 1;
     private static final int STATE_DEVICE_CHAT = 2;
     private static final int STATE_MAIN_CONFIG = 3;
-    private RCApp myApp;
-    private RCApp.DevicesHolderList DevList() { return  myApp.mDeviceItems; }
+    private WCApp myApp;
+    private WCApp.DevicesHolderList DevList() { return  myApp.mDeviceItems; }
+
+
+    private static final int DEVICE_LIST_REFRESH_PERIOD = 500;
+    private static final int DEVICE_SERVER_REQUEST_PERIOD = 5000;
+    private static final int DEVICE_SERVER_CONNECT_COOLDOWN = 3500;
+    private static final int DEVICE_BLE_SCAN_TIMEOUT = 10000;
 
     private DeviceVariantList mAvailableDevices;
     private DeviceAdapter mAvailableDevicesAdapter;
     private ListView mListView;
     private BluetoothAdapter bluetoothAdapter;
-    private boolean READY_TO_BLE_SCAN = false;
-    private boolean BLE_SCANNING = false;
+    private static final int BS_SHUTDOWN = 0;
+    private static final int BS_SLEEP = 1;
+    private static final int BS_READY = 2;
+    private static final int BS_SCANNING = 3;
+    private int bleScannerState = BS_SHUTDOWN;
 
-    private static final int CS_USER_CFG_INCORRECT = -1;
-    private static final int CS_DISCONNECTED = 0;
-    private static final int CS_CONNECTING = 1;
-    private static final int CS_CONNECTED = 2;
-    private static final int CS_SERVER_SCANNING = 3;
-    private int httpClientState = CS_DISCONNECTED;
     private int httpServerCooldown = 0;
 
     private int ACTIVITY_STATE = STATE_DEVICE_LISTING;
     private Timer syntimer;
-    private TimerTask syntask;
+    private SynchroTask syntask;
     private AnimatorSet blinkanimation;
     private ImageView mBLEIcon;
-    private ImageView mOpenConfig;
-    private ImageView mUserConnect;
+    private ImageButton mUserConnect;
+    private TextView mUserName;
     private TextView mBLEText;
     private Handler handlerBLEScan;
     private SwipeRefreshLayout mSRL;
 
-    private OkHttpClient httpClient;
-
     private static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 1002;
     private boolean ENABLED_INTERNET_FEATURE = false;
     private boolean ENABLED_BLE_FEATURE = false;
-
-    public static final MediaType JSONMedia
-            = MediaType.get("application/json; charset=utf-8");
 
     private final ScanCallback leScanCallback =
             new ScanCallback () {
                 @Override
                 public void onScanResult(final int callbackType, final ScanResult result) {
                     super.onScanResult(callbackType, result);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            BluetoothDevice bledevice = result.getDevice();
-                            if (bledevice != null) {
-                                String dname = bledevice.getName();
-                                if (dname != null && dname.startsWith(SampleGattAttributes.BLE_NAME_PREFIX)) {
-                                    mAvailableDevices.add(bledevice);
-                                    refreshAvailableDevicesAdapter();
-                                }
+                    runOnUiThread(() -> {
+                        BluetoothDevice bledevice = result.getDevice();
+                        if (bledevice != null) {
+                            String dname = bledevice.getName();
+                            if (dname != null && dname.startsWith(SampleGattAttributes.BLE_NAME_PREFIX)) {
+                                mAvailableDevices.add(bledevice);
+                                doRefreshAvailableDevices();
                             }
                         }
                     });
@@ -168,175 +165,94 @@ public class MainActivity extends AppCompatActivity {
 
         public void run() {
             DevList().beginUpdate();
-            for (BLEDeviceVariant bd : mAvailableDevices)
-                if (bd.isCompleteDevice())
-                    DevList().saveItem(bd.item);
-            DevList().endUpdate();
+            mAvailableDevices.lock();
+            try {
+                for (BLEDeviceVariant bd : mAvailableDevices)
+                    if (bd.isServerCompleteDevice())
+                        DevList().saveItem(bd.item);
+            } finally {
+                mAvailableDevices.unlock();
+                DevList().endUpdate();
+            }
+            refreshAvailableDevicesThreadSafe();
 
-            /*mAvailableDevices.clear();
-            for (DeviceItem ci : DevList()) {
-                BLEDeviceVariant ad = new BLEDeviceVariant(ci);
-                mAvailableDevices.add(ad);
-            }*/
-            refreshAvailableDevicesAdapter();
-
-            httpServerCooldown -= 1000;
+            httpServerCooldown -= DEVICE_LIST_REFRESH_PERIOD;
             if (httpServerCooldown < 0) httpServerCooldown = 0;
 
-            if (ENABLED_INTERNET_FEATURE &&
-                    (httpClientState == CS_DISCONNECTED) && (httpServerCooldown <= 0)) {
-                try {
-                    httpClientState = CS_CONNECTING;
 
-                    JSONObject obj = new JSONObject();
-                    obj.put(JSON_NAME, myApp.getHttpCfgUserName());
-                    obj.put(JSON_PASS, myApp.getHttpCfgUserPsw());
-                    obj.put(JSON_DEVICE, myApp.getHttpCfgDevice());
-
-                    WCRESTTask wc_task = new WCRESTTask(httpClient);
-                    wc_task.setOnJSONResponseListener(new OnJSONRequestFinished() {
-                        @Override
-                        public void onChange(int resultCode, JSONObject resultMsg) {
-                            if (resultCode == REST_RESULT_OK)
-                                connectUser(resultMsg.optString(JSON_SHASH));
-                            else
-                                consumeHTTPError(resultCode);
-                        }
-                    });
-                    wc_task.execute(myApp.getHttpCfgServerUrl(),
-                            WC_REST_authorize, obj.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (ENABLED_INTERNET_FEATURE && (httpClientState == CS_CONNECTED)) {
-                try {
-                    httpClientState = CS_SERVER_SCANNING;
-
-                    JSONObject obj = new JSONObject();
-                    obj.put(JSON_SHASH, myApp.getHttpCfgSID());
-
-                    WCRESTTask wc_task = new WCRESTTask(httpClient);
-                    wc_task.setOnJSONResponseListener(new OnJSONRequestFinished() {
-                        @Override
-                        public void onChange(int resultCode, JSONObject resultMsg) {
-                            httpClientState = CS_CONNECTED;
-                            if (resultCode == REST_RESULT_OK) {
+            if (ENABLED_INTERNET_FEATURE && (httpServerCooldown <= 0)) {
+                WCHTTPClient httpClient = WCHTTPClientHolder.getInstance(MainActivity.this);
+                if (httpClient.state() == CS_DISCONNECTED) {
+                    httpClient.startConnect(MainActivity.this);
+                } else
+                if (httpClient.state() == CS_CONNECTED) {
+                    httpServerCooldown = DEVICE_SERVER_REQUEST_PERIOD;
+                    httpClient.startScanning(MainActivity.this,
+                            (resultCode, resultMsg) -> {
                                 Object res = resultMsg.opt(JSON_DEVICES);
+
+                                mAvailableDevices.lock();
+                                try {
+                                    for (BLEDeviceVariant deviceVariant : mAvailableDevices)
+                                        if (deviceVariant.isServerCompleteDevice())
+                                            deviceVariant.item.setOnline(false);
+                                } finally {
+                                    mAvailableDevices.unlock();
+                                }
+
                                 if (res instanceof JSONArray)
                                     for (int i = 0; i < ((JSONArray) res).length(); i++) {
                                         Object aDevice = ((JSONArray) res).opt(i);
                                         if (aDevice instanceof String)
                                             mAvailableDevices.add((String) aDevice);
                                     }
-                                refreshAvailableDevicesAdapter();
-                            } else
-                                consumeHTTPError(resultCode);
-                        }
-                    });
-                    wc_task.execute(myApp.getHttpCfgServerUrl(),
-                            WC_REST_getDevicesOnline, obj.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
+
+                                refreshAvailableDevicesThreadSafe();
+                            });
                 }
             }
 
-            if (ENABLED_BLE_FEATURE && READY_TO_BLE_SCAN && !BLE_SCANNING) {
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        //
-                        mSRL.setRefreshing(false);
-                        READY_TO_BLE_SCAN = false;
+            if (ENABLED_BLE_FEATURE && (bleScannerState == BS_READY)) {
+                runOnUiThread(() -> {
+                    mAvailableDevices.removeMasked(DEVICE_VARIANT_BLE_ITEM);
+                    doRefreshAvailableDevices();
+                    //
+                    mSRL.setRefreshing(false);
 
-                        handlerBLEScan.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                cancelSearchBLE();
-                            }
-                        }, 10000);
+                    handlerBLEScan.postDelayed(MainActivity.this::cancelSearchBLE, DEVICE_BLE_SCAN_TIMEOUT);
 
-                        BLE_SCANNING = true;
+                    bleScannerState = BS_SCANNING;
 
-                        mBLEIcon.setVisibility(View.VISIBLE);
-                        mBLEText.setVisibility(View.VISIBLE);
-                        mBLEIcon.setAlpha(0f);
-                        mBLEText.setText(R.string.searching_ble);
-                        blinkanimation.start();
+                    mBLEIcon.setVisibility(View.VISIBLE);
+                    mBLEText.setVisibility(View.VISIBLE);
+                    mBLEIcon.setAlpha(0f);
+                    mBLEText.setText(R.string.searching_ble);
+                    blinkanimation.start();
 
-                        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+                    final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 
-                        for (BluetoothDevice bluetoothDevice : bluetoothManager.getConnectedDevices(BluetoothProfile.GATT))
-                            if (bluetoothDevice.getName().startsWith(SampleGattAttributes.BLE_NAME_PREFIX))
-                                mAvailableDevices.add(bluetoothDevice);
+                    for (BluetoothDevice bluetoothDevice : bluetoothManager.getConnectedDevices(BluetoothProfile.GATT))
+                        if (bluetoothDevice.getName().startsWith(SampleGattAttributes.BLE_NAME_PREFIX))
+                            mAvailableDevices.add(bluetoothDevice);
 
-                        startBLEScaning();
-                        refreshAvailableDevicesAdapter();
-                    }
-
+                    startBLEScaning();
+                    doRefreshAvailableDevices();
                 });
             }
         }
     }
 
-    private void refreshAvailableDevicesAdapter() {
-        Collections.sort(mAvailableDevices);
-        runOnUiThread (new Thread(new Runnable() {
-            public void run() {
-                mAvailableDevicesAdapter.notifyDataSetChanged();
-            }
-        }));
+    private void refreshAvailableDevicesThreadSafe() {
+        runOnUiThread (new Thread(this::doRefreshAvailableDevices));
     }
 
-    private static class WCRESTTask extends AsyncTask<String, Void, String> {
-
-        private final OkHttpClient client;
-        private OnJSONRequestFinished onfinish;
-
-        WCRESTTask(OkHttpClient aClient) {
-            client = aClient;
-        }
-
-        protected String doInBackground(String... params) {
-            try {
-                RequestBody body = RequestBody.create(params[2], JSONMedia);
-                Request request = new Request.Builder()
-                        .url(params[0] + params[1])
-                        .post(body)
-                        .build();
-                try (Response response = client.newCall(request).execute()) {
-                    return response.body().string();
-                }
-            } catch (Exception e) {
-                return e.toString();
-            }
-        }
-
-        void setOnJSONResponseListener(OnJSONRequestFinished rf) {
-            onfinish = rf;
-        }
-
-        protected void onPostExecute(String resp) {
-            if (onfinish != null) {
-                int code;
-                try {
-                    JSONObject jsonObj = new JSONObject(resp);
-                    String res = jsonObj.optString(JSON_RESULT, "");
-                    if (res.length() > 0) {
-                        if (res.equals(JSON_OK)) {
-                            code = REST_RESULT_OK;
-                        } else {
-                            code = jsonObj.optInt(JSON_CODE, REST_ERR_UNSPECIFIED);
-                        }
-                        onfinish.onChange(code, jsonObj);
-                    } else {
-                        onfinish.onChange(REST_ERR_UNSPECIFIED, null);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    onfinish.onChange(REST_ERR_NETWORK, null);
-                }
-            }
+    private void doRefreshAvailableDevices() {
+        mAvailableDevices.lock();
+        try {
+            mAvailableDevices.sortList();
+            mAvailableDevicesAdapter.notifyDataSetChanged();
+        } finally {
+            mAvailableDevices.unlock();
         }
     }
 
@@ -346,9 +262,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cancelSearchBLE() {
-        if (BLE_SCANNING) {
+        if (bleScannerState == BS_SCANNING) {
             bluetoothAdapter.getBluetoothLeScanner().stopScan(leScanCallback);
-            BLE_SCANNING = false;
+            bleScannerState = BS_SLEEP;
             mBLEIcon.setVisibility(View.GONE);
             int cnt = mAvailableDevicesAdapter.getCount();
             if (cnt == 0) {
@@ -361,10 +277,42 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean mListMod = false;
 
+    private final WCHTTPClient.OnStateChangeListener httpInterface = new WCHTTPClient.OnStateChangeListener() {
+        @Override
+        public void onConnect(String sid) {
+            runOnUiThread (new Thread(() -> {
+                mUserName.setText(myApp.getHttpCfgUserName());
+                mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.connected));
+            }));
+        }
+
+        @Override
+        public void onDisconnect(int errCode) {
+            httpServerCooldown = DEVICE_SERVER_CONNECT_COOLDOWN;
+            runOnUiThread (new Thread(() -> {
+                mUserName.setText(myApp.getHttpCfgUserName());
+                mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.disconnected));
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        String.format(getString(R.string.rest_error), errCode, REST_RESPONSE_ERRORS[errCode]),
+                        Toast.LENGTH_LONG);
+                toast.show();
+            }));
+        }
+
+        @Override
+        public void onClientStateChanged(int newState) { }
+
+        @Override
+        public void onLoginError(int errCode, String errStr) {
+            myApp.alertWrongUser(MainActivity.this, errStr,
+                    (dialogInterface, i) -> launchMainConfig());
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        myApp = (RCApp) getApplication();
+        myApp = (WCApp) getApplication();
 
         myApp.setHttpCfgDevice("android_" + Build.MODEL);
 
@@ -377,13 +325,18 @@ public class MainActivity extends AppCompatActivity {
         handlerBLEScan = new Handler();
 
         mAvailableDevices = new DeviceVariantList();
+        for (DeviceItem di : DevList()) {
+            di.setOnline(false);
+            mAvailableDevices.add(new BLEDeviceVariant(di));
+        }
         mAvailableDevicesAdapter = new DeviceAdapter(this);
 
         mListView = findViewById(R.id.list_view);
         mListView.setAdapter(mAvailableDevicesAdapter);
 
-        mOpenConfig = findViewById(R.id.img_open_config);
+        ImageButton mOpenConfig = findViewById(R.id.img_open_config);
         mUserConnect = findViewById(R.id.img_con_indicator);
+        mUserName = findViewById(R.id.username_tv);
 
         mSRL = findViewById(R.id.drawer_layout);
 
@@ -403,54 +356,39 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
-        mSRL.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                if (!BLE_SCANNING) {
-                    allowToBLEScan();
-                } else {
-                    mSRL.setRefreshing(false);
-                }
+        mSRL.setOnRefreshListener(this::allowToBLEScan);
+
+        mListView.setOnItemLongClickListener((parent, view, position, id) -> {
+            mListMod = false;
+            Object o = mListView.getItemAtPosition(position);
+            BLEDeviceVariant aitem = (BLEDeviceVariant) o;
+            if (aitem.isBLEDevice()) {
+                mAvailableDevices.remove(position);
+                doRefreshAvailableDevices();
+                mListMod = true;
             }
+            return false;
         });
 
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        mListView.setOnItemClickListener((parent, view, position, id) -> {
+            if (mListMod) {
                 mListMod = false;
-                Object o = mListView.getItemAtPosition(position);
-                BLEDeviceVariant aitem = (BLEDeviceVariant) o;
-                if (aitem.isBLEDevice()) {
-                    mAvailableDevices.remove(position);
-                    refreshAvailableDevicesAdapter();
-                    mListMod = true;
-                }
-                return false;
+                return;
             }
-        });
-
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (mListMod) {
-                    mListMod = false;
-                    return;
+            Object o = mListView.getItemAtPosition(position);
+            BLEDeviceVariant aitem = (BLEDeviceVariant) o;
+            switch (aitem.variant) {
+                case DEVICE_VARIANT_DEVICE:
+                case DEVICE_VARIANT_SERVER_ITEM: {
+                    DeviceItem adevice = aitem.item;
+                    launchDeviceChat(adevice);
+                    break;
                 }
-                Object o = mListView.getItemAtPosition(position);
-                BLEDeviceVariant aitem = (BLEDeviceVariant) o;
-                switch (aitem.variant) {
-                    case BLEDeviceVariant.DEVICE_VARIANT_DEVICE:
-                    case BLEDeviceVariant.DEVICE_VARIANT_SERVER_ITEM: {
-                        DeviceItem adevice = aitem.item;
-                        launchDeviceChat(adevice);
-                        break;
-                    }
-                    case BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM: {
-                        final DeviceItem adevice = aitem.item;
-                        if (!adevice.isBLEConnected())
-                            launchDeviceConfig(adevice);
-                        break;
-                    }
+                case DEVICE_VARIANT_BLE_ITEM: {
+                    final DeviceItem adevice = aitem.item;
+                    if (!adevice.isBLEConnected())
+                        launchDeviceConfig(adevice);
+                    break;
                 }
             }
         });
@@ -472,11 +410,35 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mOpenConfig.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                launchMainConfig();
-            }
+        mOpenConfig.setOnClickListener(v -> launchMainConfig());
+        mUserConnect.setOnClickListener(view -> {
+            if (ENABLED_INTERNET_FEATURE) {
+                WCHTTPClient wchttpClient = WCHTTPClientHolder.getInstance(this);
+                switch (wchttpClient.state()) {
+                    case CS_CONNECTED:
+                        new AlertDialog.Builder(
+                                new ContextThemeWrapper(MainActivity.this, R.style.AlertDialogCustom))
+                                .setTitle(R.string.disconnect_user)
+                                .setMessage(R.string.disconnect_request)
+                                .setPositiveButton(android.R.string.yes, (dialog, which) -> WCHTTPClientHolder.getInstance(MainActivity.this).disconnectByUser())
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .show();
+                        break;
+                    case CS_USER_CFG_INCORRECT:
+                    case CS_DISCONNECTED_BY_USER:
+                    {
+                        wchttpClient.retryConnect();
+                        restartScanMode();
+                        break;
+                    }
+                    case CS_DISCONNECTED: {
+                        restartScanMode();
+                        break;
+                    }
+                }
+            } else
+                checkPermissions();
         });
     }
 
@@ -489,31 +451,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void launchDeviceConfig(DeviceItem adevice) {
-        /*final Intent intent = new Intent(MainActivity.this, DeviceConfigActivity.class);
-        intent.putExtra(DeviceConfigActivity.EXTRAS_DEVICE_NAME, adevice.getDeviceBLEName());
-        intent.putExtra(DeviceConfigActivity.EXTRAS_DEVICE_ADDRESS, adevice.getDeviceBLEAddress());
-        intent.putExtra(DeviceConfigActivity.EXTRAS_DEVICE_WRITE_ID, adevice.getDeviceWriteChar());
-        intent.putExtra(DeviceConfigActivity.EXTRAS_DEVICE_COLOR, adevice.getDeviceColor());
-        intent.putExtra(DeviceConfigActivity.EXTRAS_DEVICE_INDEX, adevice.getDeviceIndex());*/
+        final Intent intent = new Intent(MainActivity.this, DeviceConfigActivity.class);
+        intent.putExtra(EXTRAS_DEVICE_BLE_NAME, adevice.getDeviceBLEName());
+        intent.putExtra(EXTRAS_DEVICE_ADDRESS, adevice.getDeviceBLEAddress());
+        intent.putExtra(EXTRAS_DEVICE_WRITE_ID, adevice.getDeviceWriteChar());
+        intent.putExtra(EXTRAS_DEVICE_COLOR, adevice.getDeviceItemColor());
+        intent.putExtra(EXTRAS_DEVICE_INDEX, adevice.getDeviceItemIndex());
         cancelSearchBLE();
         ACTIVITY_STATE = STATE_DEVICE_CONFIG;
         adevice.BLEConnect();
         stopTimer();
-        //startActivityForResult(intent, REQUEST_DEVICE_CONFIG_MODE);
+        startActivityForResult(intent, REQUEST_DEVICE_CONFIG_MODE);
     }
 
     private void launchDeviceChat(DeviceItem adevice) {
-        /*final Intent intent = new Intent(MainActivity.this, DeviceControlActivity.class);
-        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
-        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_WRITE_ID, adevice.getDeviceWriteChar());
-        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_COLOR, adevice.getDeviceColor());
-        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_INDEX, adevice.getDeviceIndex());*/
+        final Intent intent = new Intent(MainActivity.this, DeviceChatActivity.class);
+        long userDbId = -1;
+        String cfgDev = myApp.getHttpCfgDevice();
+        DeviceItem userDevice = DevList().findItem(cfgDev);
+        if (userDevice != null) {
+            userDbId = userDevice.getDbId();
+        }
+        intent.putExtra(EXTRAS_USER_DEVICE_ID, userDbId);
+        intent.putExtra(EXTRAS_TARGET_DEVICE_ID, adevice.getDbId());
+        intent.putExtra(EXTRAS_DEVICE_HOST_NAME, adevice.getDeviceServerName());
+        intent.putExtra(EXTRAS_DEVICE_ADDRESS, adevice.getDeviceBLEAddress());
+        intent.putExtra(EXTRAS_DEVICE_BLE_NAME, adevice.getDeviceBLEName());
+        intent.putExtra(EXTRAS_DEVICE_WRITE_ID, adevice.getDeviceWriteChar());
+        intent.putExtra(EXTRAS_DEVICE_COLOR, adevice.getDeviceItemColor());
+        intent.putExtra(EXTRAS_DEVICE_INDEX, adevice.getDeviceItemIndex());
         cancelSearchBLE();
         ACTIVITY_STATE = STATE_DEVICE_CHAT;
-        adevice.BLEConnect();
         stopTimer();
-        //startActivityForResult(intent, REQUEST_DEVICE_CHAT_MODE);
+        startActivityForResult(intent, REQUEST_DEVICE_CHAT_MODE);
     }
 
     final static int REQUEST_ENABLE_BT = 0x009333;
@@ -523,6 +493,8 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onResume() {
         super.onResume();
+
+        WCHTTPClientHolder.getInstance(this).addStateChangeListener(httpInterface);
 
         checkPermissions();
         // Ensures Bluetooth is available on the device and it is enabled. If not,
@@ -547,7 +519,7 @@ public class MainActivity extends AppCompatActivity {
         //This will be called after onCreate or your activity is resumed
         if (syntimer == null) {
             restartAsyncTimer();
-            syntimer.schedule(syntask, 500, 1000);
+            syntimer.schedule(syntask, 500, DEVICE_LIST_REFRESH_PERIOD);
         }
     }
 
@@ -570,6 +542,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
+        WCHTTPClientHolder.getInstance(this).removeStateChangeListener(httpInterface);
+
         DevList().saveToDB();
 
         //This will be called if the app is sent to background or the phone is locked
@@ -585,69 +559,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void allowToBLEScan() {
-        READY_TO_BLE_SCAN = true;
+        if (bleScannerState != BS_SCANNING)
+            bleScannerState = BS_READY;
+        else
+            mSRL.setRefreshing(false);
     }
 
     private void denyToBLEScan() {
-        READY_TO_BLE_SCAN = false;
-    }
-
-    private void connectUser(String sid) {
-        httpClientState = CS_CONNECTED;
-        myApp.setHttpCfgSID(sid);
-        runOnUiThread (new Thread(new Runnable() {
-            public void run() {
-                mUserConnect.setImageDrawable(getDrawable(R.drawable.connected));
-            }
-        }));
-    }
-
-    private void consumeHTTPError(int code) {
-        switch (code) {
-            case REST_ERR_NO_SUCH_SESSION:
-            case REST_ERR_DATABASE_FAIL:
-            case REST_ERR_JSON_FAIL:
-            case REST_ERR_INTERNAL_UNK:
-                disconnectUser(code);
-            case REST_ERR_NO_SUCH_USER:
-            case REST_ERR_NETWORK:
-                alertWrongUser(code);
-        }
-    }
-
-    private void disconnectUser(int code) {
-        httpClientState = CS_DISCONNECTED;
-        httpServerCooldown = 3500;
-        myApp.setHttpCfgSID("");
-        runOnUiThread (new Thread(new Runnable() {
-            public void run() {
-                mUserConnect.setImageDrawable(getDrawable(R.drawable.disconnected));
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        String.format(getString(R.string.rest_error), code, REST_RESPONSE_ERRORS[code]),
-                        Toast.LENGTH_LONG);
-                toast.show();
-            }
-        }));
-    }
-
-    private void alertWrongUser(int code) {
-        disconnectUser(code);
-        httpClientState = CS_USER_CFG_INCORRECT;
-        runOnUiThread (new Thread(new Runnable() {
-            public void run() {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle(R.string.alert_refused_connection)
-                        .setMessage(R.string.alert_edit_config)
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                launchMainConfig();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
-            }
-        }));
+        if (bleScannerState == BS_SCANNING)
+            cancelSearchBLE();
+        bleScannerState = BS_SHUTDOWN;
+        mSRL.setRefreshing(false);
     }
 
     protected void onActivityResult (int requestCode,
@@ -665,32 +587,40 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_DEVICE_CONFIG_MODE) {
             restartScanMode();
 
-            if (data != null) {
-                    /*String deviceAddress = data.getStringExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS);
-                    final BluetoothManager bluetoothManager =
-                            (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-                    List<BluetoothDevice> bles = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
-                    for (BluetoothDevice bluetoothDevice : bles) {
-                        if (bluetoothDevice.getAddress().compareTo(deviceAddress) == 0) {
-                            Log.d("MainActivity", deviceAddress + " still connected ");
-                        }
-                    }*/
+            if (data != null && (resultCode == RESULT_OK)) {
+                String deviceAddress = data.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+                String deviceName = data.getStringExtra(EXTRAS_DEVICE_BLE_NAME);
+                String deviceHostName = data.getStringExtra(EXTRAS_DEVICE_HOST_NAME);
+                int deviceColor = data.getIntExtra(EXTRAS_DEVICE_COLOR, DEFAULT_DEVICE_COLOR);
+                int deviceIndex = data.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
+
+                DeviceItem di = mAvailableDevices.add(deviceHostName, deviceAddress, deviceName);
+                DevList().beginUpdate();
+                try {
+                    DevList().saveItem(di);
+                    DevList().setDeviceProps(di, deviceColor, deviceIndex);
+                } finally {
+                    DevList().endUpdate();
+                }
             }
 
         } else
         if (requestCode == REQUEST_DEVICE_CHAT_MODE) {
             restartScanMode();
 
-            if (data != null) {
-                    /*String deviceAddress = data.getStringExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS);
-                    final BluetoothManager bluetoothManager =
-                            (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-                    List<BluetoothDevice> bles = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
-                    for (BluetoothDevice bluetoothDevice : bles) {
-                        if (bluetoothDevice.getAddress().compareTo(deviceAddress) == 0) {
-                            Log.d("MainActivity", deviceAddress + " still connected ");
-                        }
-                    }*/
+            if (data != null && (resultCode == RESULT_OK)) {
+                String deviceHostName = data.getStringExtra(EXTRAS_DEVICE_HOST_NAME);
+                int deviceColor = data.getIntExtra(EXTRAS_DEVICE_COLOR, DEFAULT_DEVICE_COLOR);
+                int deviceIndex = data.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
+
+                DeviceItem di = mAvailableDevices.add(deviceHostName);
+                DevList().beginUpdate();
+                try {
+                    DevList().saveItem(di);
+                    DevList().setDeviceProps(di, deviceColor, deviceIndex);
+                } finally {
+                    DevList().endUpdate();
+                }
             }
 
         } else
@@ -701,7 +631,7 @@ public class MainActivity extends AppCompatActivity {
             }
             // trying to reset the scan mode. hope the user gave the correct config
             if (connectDataChanged)
-                httpClientState = CS_DISCONNECTED;
+                WCHTTPClientHolder.getInstance(this).retryConnect();
             restartScanMode();
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -755,15 +685,15 @@ public class MainActivity extends AppCompatActivity {
             Drawable aDevicePic = null, aSecondaryPic = null, aPresencePic = null;
 
             switch (ble.variant) {
-                case BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM: {
+                case DEVICE_VARIANT_BLE_ITEM: {
                     aName = ble.item.getDeviceBLEName();
                     aText2 = ble.item.getDeviceBLEAddress();
-                    aDevicePic = getDrawable(ble.item.getDevicePictureID());
+                    aDevicePic = ContextCompat.getDrawable(MainActivity.this, ble.item.getDevicePictureID());
                     aSecondaryPic = new DeviceIconID(ble.item.getDeviceItemColor(), ble.item.getDeviceItemIndex());
                     break;
                 }
-                case BLEDeviceVariant.DEVICE_VARIANT_DEVICE:
-                case BLEDeviceVariant.DEVICE_VARIANT_SERVER_ITEM: {
+                case DEVICE_VARIANT_DEVICE:
+                case DEVICE_VARIANT_SERVER_ITEM: {
                     int resID = 0;
 
                     aName = ble.item.getDeviceServerName();
@@ -784,24 +714,23 @@ public class MainActivity extends AppCompatActivity {
 
                     resID =  ble.item.getDevicePictureID();
                     if (resID != 0) {
-                        aDevicePic = getDrawable(resID);
+                        aDevicePic = ContextCompat.getDrawable(MainActivity.this,resID);
                         aSecondaryPic = new DeviceIconID(ble.item.getDeviceItemColor(),
                                 ble.item.getDeviceItemIndex());
                     }
 
                     if (ble.item.isOnline())
-                        aPresencePic = getDrawable(android.R.drawable.presence_online);
+                        aPresencePic = ContextCompat.getDrawable(MainActivity.this,android.R.drawable.presence_online);
                     else
-                        aPresencePic = getDrawable(android.R.drawable.presence_offline);
+                        aPresencePic = ContextCompat.getDrawable(MainActivity.this,android.R.drawable.presence_offline);
 
                     break;
                 }
             }
 
-            TextView name_tv = (TextView) convertView.findViewById(R.id.text1);
-            TextView mac_tv = (TextView) convertView.findViewById(R.id.text2);
-
-            ImageView img = convertView.findViewById(R.id.icon);
+            TextView name_tv = convertView.findViewById(R.id.text1);
+            TextView mac_tv  = convertView.findViewById(R.id.text2);
+            ImageView img    = convertView.findViewById(R.id.icon);
             ImageView img_id = convertView.findViewById(R.id.icon_id);
             ImageView img_presence = convertView.findViewById(R.id.icon_presence);
             ImageView img_cfg = convertView.findViewById(R.id.icon_cfg);
@@ -880,8 +809,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, (String [])
-                    listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]),
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[0]),
                     REQUEST_ID_MULTIPLE_PERMISSIONS);
         } else {
             setInternetFeatures(true);
@@ -890,7 +818,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == REQUEST_ID_MULTIPLE_PERMISSIONS) {
@@ -918,62 +847,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private static OkHttpClient getUnsafeOkHttpClient() {
-        try {
-            // Create a trust manager that does not validate certificate chains
-            final TrustManager[] trustAllCerts = new TrustManager[] {
-                    new X509TrustManager() {
-                        @Override
-                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
-                        }
-
-                        @Override
-                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
-                        }
-
-                        @Override
-                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                            return new java.security.cert.X509Certificate[]{};
-                        }
-                    }
-            };
-
-            // Install the all-trusting trust manager
-            final SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-            // Create an ssl socket factory with our all-trusting manager
-            final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
-            OkHttpClient.Builder builder = new OkHttpClient.Builder();
-            builder.sslSocketFactory(sslSocketFactory, (X509TrustManager)trustAllCerts[0]);
-            builder.hostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            });
-
-            OkHttpClient okHttpClient = builder.build();
-            return okHttpClient;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private void setInternetFeatures(boolean value) {
         ENABLED_INTERNET_FEATURE = value;
         if (value) {
-            if (httpClient == null) httpClient = getUnsafeOkHttpClient();
+            WCHTTPClientHolder.getInstance(this).getClient();
         } else {
-            httpClient = null;
-            httpClientState = CS_DISCONNECTED;
+            WCHTTPClientHolder.getInstance(this).releaseClient();
         }
     }
 
     private void setBLEFeatures(boolean value) {
         ENABLED_BLE_FEATURE = value;
         if (!value)
-            READY_TO_BLE_SCAN = false;
+            denyToBLEScan();
     }
 
 
@@ -981,80 +867,150 @@ public class MainActivity extends AppCompatActivity {
 
         private boolean hasServerDevices = false;
         private boolean hasBLEDevices = false;
+        private final ReentrantLock lock = new ReentrantLock();
 
         @Override
         public void clear() {
-            hasServerDevices = false;
-            hasBLEDevices = false;
-            super.clear();
+            lock();
+            try {
+                hasServerDevices = false;
+                hasBLEDevices = false;
+                super.clear();
+            } finally {
+                unlock();
+            }
+        }
+
+        public void sortList() {
+            Collections.sort(this);
+        }
+
+        public void lock() {
+            lock.lock();
+        }
+
+        public void unlock() {
+            lock.unlock();
+        }
+
+        public void removeMasked(int mask) {
+            lock();
+            try {
+                for (int i = size()-1; i >=0; i--) {
+                    if ((get(i).variant & mask) > 0)
+                        remove(i);
+                }
+            } finally {
+                unlock();
+            }
+        }
+
+        private void setHasServerDevices() {
+            if (hasBLEDevices && !hasServerDevices)
+                add(new BLEDeviceVariant());
+            hasServerDevices = true;
+        }
+
+        private void setHasBLEDevices() {
+            if (!hasBLEDevices && hasServerDevices)
+                add(new BLEDeviceVariant());
+            hasBLEDevices = true;
         }
 
         @Override
         public boolean add(BLEDeviceVariant item) {
-            if (item.isServerCompleteDevice())
-                hasServerDevices = true;
-            else
-            if (item.isBLEDevice())
-            {
-                if (!hasBLEDevices && hasServerDevices)
-                    add(new BLEDeviceVariant());
-                hasBLEDevices = true;
+            lock();
+            try {
+                if (item.isServerCompleteDevice())
+                    setHasServerDevices();
+                else
+                if (item.isBLEDevice())
+                    setHasBLEDevices();
+
+                return super.add(item);
+            } finally {
+                unlock();
             }
-            return super.add(item);
         }
 
-        public boolean add(String item) {
-            for (BLEDeviceVariant bd : mAvailableDevices)
-                if (bd.isServerCompleteDevice())
-                    if (bd.item.getDeviceServerName().equals(item)) {
-                        bd.item.setOnline(true);
-                        return true;
-                    }
-            DeviceItem di = new DeviceItem(getApplicationContext());
-            di.setOnline(true);
-            DevList().completeItem(di, item);
-            return add(new BLEDeviceVariant(di));
-        }
+        public DeviceItem add(String item) {
+            lock();
+            try {
+                setHasServerDevices();
 
-
-        public boolean add(BluetoothDevice bleDevice) {
-            String bleaddress = bleDevice.getAddress();
-            for (BLEDeviceVariant bd : mAvailableDevices)
-                if (bd.isBLECompleteDevice())
-                    if (bd.item.getDeviceBLEAddress().equals(bleaddress)) {
-                        bd.item.setBLEDevice(bleDevice);
-                        bd.update();
-                        return true;
-                    }
-            DeviceItem di = new DeviceItem(getApplicationContext());
-            di.setBLEDevice(bleDevice);
-            DevList().completeItem(di, bleDevice.getName(), bleDevice.getAddress());
-            return add(new BLEDeviceVariant(di));
-        }
-
-        public boolean add(String srvName, String bleAddr, String bleName) {
-            for (BLEDeviceVariant bd : mAvailableDevices)
-            {
-                switch (bd.variant) {
-                    case BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM:{
-                        if (bd.item.getDeviceBLEAddress().equals(bleAddr)) {
-                            DevList().completeItem(bd.item, srvName);
-                            bd.update();
-                            return true;
+                for (BLEDeviceVariant bd : mAvailableDevices)
+                    if (bd.isServerCompleteDevice())
+                        if (bd.item.getDeviceServerName().equals(item)) {
+                            bd.item.setOnline(true);
+                            return bd.item;
                         }
-                    }
-                    case BLEDeviceVariant.DEVICE_VARIANT_DEVICE:{
-                        if (bd.item.getDeviceServerName().equals(srvName)) {
-                            DevList().completeItem(bd.item, bleName, bleAddr);
+                DeviceItem di = new DeviceItem(getApplicationContext());
+                di.setOnline(true);
+                DevList().completeItem(di, item);
+                add(new BLEDeviceVariant(di));
+                return di;
+            } finally {
+                unlock();
+            }
+        }
+
+
+        public void add(BluetoothDevice bleDevice) {
+            lock();
+            try {
+                setHasBLEDevices();
+
+                String bleaddress = bleDevice.getAddress();
+                for (BLEDeviceVariant bd : mAvailableDevices)
+                    if (bd.isBLECompleteDevice())
+                        if (bd.item.getDeviceBLEAddress().equals(bleaddress)) {
+                            bd.item.setBLEDevice(bleDevice);
                             bd.update();
-                            return true;
+                            return;
+                        }
+                DeviceItem di = new DeviceItem(getApplicationContext());
+                di.setBLEDevice(bleDevice);
+                DevList().completeItem(di, bleDevice.getName(), bleDevice.getAddress());
+                add(new BLEDeviceVariant(di));
+            } finally {
+                unlock();
+            }
+        }
+
+        public DeviceItem add(String srvName, String bleAddr, String bleName) {
+            lock();
+            try {
+                for (BLEDeviceVariant bd : mAvailableDevices)
+                {
+                    switch (bd.variant) {
+                        case DEVICE_VARIANT_DEVICE:
+                        case DEVICE_VARIANT_BLE_ITEM:{
+                            if (bd.item.getDeviceBLEAddress().equals(bleAddr)) {
+                                DevList().completeItem(bd.item, srvName);
+                                bd.update();
+                                return bd.item;
+                            }
+                            break;
+                        }
+                        case DEVICE_VARIANT_SERVER_ITEM:{
+                            if (bd.item.getDeviceServerName().equals(srvName)) {
+                                DevList().completeItem(bd.item, bleName, bleAddr);
+                                bd.update();
+                                return bd.item;
+                            }
+                            break;
                         }
                     }
                 }
+                setHasServerDevices();
+                DeviceItem di = new DeviceItem(getApplicationContext());
+                DevList().completeItem(di, srvName, bleName, bleAddr);
+                BLEDeviceVariant res = new BLEDeviceVariant(di);
+                add(res);
+                return di;
+            } finally {
+                unlock();
             }
-            DeviceItem di = new DeviceItem(getApplicationContext());
-            DevList().completeItem(di, srvName, bleName, bleAddr);
-            return add(new BLEDeviceVariant(di));
         }
     }
 }

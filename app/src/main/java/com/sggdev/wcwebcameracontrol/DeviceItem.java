@@ -2,33 +2,23 @@ package com.sggdev.wcwebcameracontrol;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.content.SharedPreferences;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
-import static android.content.Context.MODE_PRIVATE;
 
 public class DeviceItem implements Comparable<DeviceItem> {
     public static final int DEFAULT_DEVICE_COLOR = 0xffaaaaaa;
 
-    private static final String DEVICE_ITEM_SERVER_NAME = "server_name";
-    private static final String DEVICE_ITEM_BLE_NAME = "ble_name";
-    private static final String DEVICE_ITEM_BLE_ADDRESS = "ble_address";
-    private static final String DEVICE_ITEM_CHAR = "char";
-    private static final String DEVICE_ITEM_COLOR = "color";
-    private static final String DEVICE_ITEM_INDEX = "index";
-    private static final String DEVICE_ITEM_RATE = "rate";
-    private static final String DEVICE_ITEM_TIME_STAMP = "timestamp";
-
-    private Timestamp mTimeStamp;
-    private long mRate;
+    public static final String DEVICE_ITEM_DB_ID = "did";
+    public static final String DEVICE_ITEM_SERVER_NAME = "server_name";
+    public static final String DEVICE_ITEM_BLE_NAME = "ble_name";
+    public static final String DEVICE_ITEM_BLE_ADDRESS = "ble_address";
+    public static final String DEVICE_ITEM_CHAR = "ble_char";
+    public static final String DEVICE_ITEM_COLOR = "color";
+    public static final String DEVICE_ITEM_INDEX = "ind";
+    public static final String DEVICE_ITEM_TIME_STAMP = "timestamp";
 
     private Context mContext;
     private BluetoothDevice device = null;
@@ -41,17 +31,17 @@ public class DeviceItem implements Comparable<DeviceItem> {
     private String mDevicePicture = "";
     private int mDevicePictureID;
     private int mDeviceColor = DEFAULT_DEVICE_COLOR;
-    private int mDeviceIndex = 0;    
+    private int mDeviceIndex = 0;
+    private long mDBID = -1;
+    private String mLastSync = "";
 
     DeviceItem(Context aContext) {
         mContext = aContext;
-        synchronizeTime();
     }
 
     DeviceItem(Context aContext, JSONObject obj) {
         mContext = aContext;
         restoreState(obj.toString());
-        synchronizeTime();
     }
 
     boolean isSame(DeviceItem it) {
@@ -59,7 +49,6 @@ public class DeviceItem implements Comparable<DeviceItem> {
                 (mServerName.equals(it.mServerName))&&
                 (bleAddress.equals(it.bleAddress))&&
                 (bleName.equals(it.bleName))&&
-                (mRate == it.mRate)&&
                 (mDeviceIndex == it.mDeviceIndex)&&
                 (mDeviceColor == it.mDeviceColor)&&
                 (mDevicePicture.equals(it.mDevicePicture))&&
@@ -76,7 +65,6 @@ public class DeviceItem implements Comparable<DeviceItem> {
 
             device = adevice.device;
             mIsOnline = adevice.isOnline();
-            synchronizeTime();
         }
         return cmpRes;
     }
@@ -106,10 +94,11 @@ public class DeviceItem implements Comparable<DeviceItem> {
             if (deviceBLEName.length() > 0)
                 bleName = deviceBLEName;
             if (this != an_device) {
+                mDBID = an_device.mDBID;
                 mDeviceWriteChar = an_device.mDeviceWriteChar;
                 mDeviceColor = an_device.mDeviceColor;
                 mDeviceIndex = an_device.mDeviceIndex;
-                mRate = an_device.mRate;
+                mLastSync = an_device.mLastSync;
                 device = an_device.device;
                 mIsOnline = an_device.isOnline();
                 if (deviceServerName.length() == 0)
@@ -128,14 +117,14 @@ public class DeviceItem implements Comparable<DeviceItem> {
     String saveState() {
         try {
             JSONObject cached_item = new JSONObject();
+            cached_item.put(DEVICE_ITEM_DB_ID, mDBID);
             cached_item.put(DEVICE_ITEM_SERVER_NAME, mServerName);
             cached_item.put(DEVICE_ITEM_BLE_NAME, bleName);
             cached_item.put(DEVICE_ITEM_BLE_ADDRESS, bleAddress);
             cached_item.put(DEVICE_ITEM_CHAR, mDeviceWriteChar);
             cached_item.put(DEVICE_ITEM_COLOR, mDeviceColor);
             cached_item.put(DEVICE_ITEM_INDEX, mDeviceIndex);
-            cached_item.put(DEVICE_ITEM_RATE, mRate);
-            cached_item.put(DEVICE_ITEM_TIME_STAMP, mTimeStamp.toString());
+            cached_item.put(DEVICE_ITEM_TIME_STAMP, mLastSync);
             return cached_item.toString();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -154,13 +143,14 @@ public class DeviceItem implements Comparable<DeviceItem> {
 
     void restoreState(JSONObject cached_item) {
         try {
+            mDBID =  cached_item.getInt(DEVICE_ITEM_DB_ID);
             bleName = cached_item.getString(DEVICE_ITEM_BLE_NAME);
             bleAddress = cached_item.getString(DEVICE_ITEM_BLE_ADDRESS);
             mServerName = cached_item.getString(DEVICE_ITEM_SERVER_NAME);
             mDeviceWriteChar = cached_item.getString(DEVICE_ITEM_CHAR);
             mDeviceIndex = cached_item.getInt(DEVICE_ITEM_INDEX);
             mDeviceColor = cached_item.getInt(DEVICE_ITEM_COLOR);
-            mRate = cached_item.getLong(DEVICE_ITEM_RATE);
+            mLastSync = cached_item.getString(DEVICE_ITEM_TIME_STAMP);
 
             updateSecondaryValues();
         } catch (JSONException e) {
@@ -185,6 +175,11 @@ public class DeviceItem implements Comparable<DeviceItem> {
         mDevicePictureID = defineDevicePictureID(mContext, mDevicePicture);
     }
 
+    void setProps(int aColor, int aIndex) {
+        mDeviceColor = aColor;
+        mDeviceIndex = aIndex;
+    }
+
     static int defineDevicePictureID(Context aContext, String aPicName) {
         int resID;
         if (aPicName != null) {
@@ -203,10 +198,9 @@ public class DeviceItem implements Comparable<DeviceItem> {
     int getDeviceItemColor() {return mDeviceColor;}
     int getDeviceItemIndex() {return mDeviceIndex;}
     String getDeviceBLEName() {return  bleName;}
-    Timestamp getTimeStamp() { return mTimeStamp; }
-    int getDevicePictureID() {
-        return mDevicePictureID;
-    }
+    int getDevicePictureID() { return mDevicePictureID;  }
+    long getDbId() { return  mDBID; }
+    String getLstSync() { return mLastSync; }
 
     boolean isBLEAvaible() {return (device != null);}
     boolean isBLEConnected() {return mIsBLEConnected;}
@@ -215,28 +209,12 @@ public class DeviceItem implements Comparable<DeviceItem> {
     void BLEDisconnect() {mIsBLEConnected = false;}
     void setOnline(boolean state) {mIsOnline = state;}
     void setBLEDevice(BluetoothDevice dev) {device = dev;}
-
-    
-    long getRate() {return mRate;}
-    void incRate() {
-        long time = System.currentTimeMillis();
-        long last = mTimeStamp.getTime();
-        if ((time - last) > 5000) {
-            mRate++;
-            synchronizeTime();
-        }
-    }
-    void decRate() {
-        if (mRate > 0) mRate--;
-        synchronizeTime();
-    }
-    void synchronizeTime() {
-        mTimeStamp = new Timestamp(System.currentTimeMillis());
-    }
+    void setDbId(long dbId) { mDBID = dbId; }
+    void setLstSync(String aLstSync) { mLastSync = aLstSync; }
 
     @Override
     public int compareTo(DeviceItem o) {
-        return (int) (o.getRate() - mRate);
+        return (int) (mLastSync.compareTo(o.mLastSync));
     }
 
     boolean hasBLEAddress() {

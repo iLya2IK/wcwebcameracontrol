@@ -7,7 +7,7 @@ public class BabaikaWebCam extends BabaikaBLEDevice {
     static String BT_WEBCAM_ICO = "ic_webcam_device";
 
     BabaikaWebCam() {
-        putCommNoti(new BabaikaWebCamNotiComm(BT_WEBCAM_NOTI_CHAR1));
+        putCommNoti(new BabaikaWebCamConfig(BT_WEBCAM_NOTI_CHAR1));
     }
 
     String getPictureName() {

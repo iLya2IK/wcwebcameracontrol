@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#a5a5a5</color>
-    <color name="colorPrimaryDark">#a5a5a5</color>
-    <color name="colorAccent">#efefef</color>
-    <color name="gray_dove_light">#aaaaaa</color>
+    <color name="colorPrimary">#3e3e3e</color>
+    <color name="colorPrimaryDark">#3e3e3e</color>
+    <color name="colorAccent">#c0e0e0</color>
+    <color name="colorText">#dedede</color>
+    <color name="red">#de5555</color>
+    <color name="colorTextSecondary">#aaaaaa</color>
+    <color name="buttonColor">#5f5f5f</color>
+
+    <color name="incomingMsgBg">#5f5f5f</color>
+    <color name="outgoingMsgBg">#4f4f6f</color>
 </resources>

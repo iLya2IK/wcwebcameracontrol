@@ -8,10 +8,13 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
+
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
 
     <application
-        android:name=".RCApp"
+        android:name=".WCApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -19,16 +22,26 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".DeviceChatActivity"
+            android:exported="false"
+            android:label="@string/title_activity_device_chat"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name=".MainConfigActivity"
             android:exported="false"
             android:label="@string/title_activity_main_config" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".BluetoothService" android:enabled="true" />
+        <activity android:name=".DeviceConfigActivity" />
+
+        <service
+            android:name=".BluetoothService"
+            android:enabled="true" />
     </application>
 
 </manifest>

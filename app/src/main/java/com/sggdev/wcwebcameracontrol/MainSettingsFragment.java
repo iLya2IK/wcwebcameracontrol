@@ -8,15 +8,14 @@ import androidx.annotation.NonNull;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceManager;
 
 public class MainSettingsFragment extends PreferenceFragmentCompat {
 
-    private final RCApp myApp;
+    private final WCApp myApp;
 
     private boolean mUsrCfgChanged = false;
 
-    MainSettingsFragment(RCApp aApp) {
+    MainSettingsFragment(WCApp aApp) {
         myApp = aApp;
     }
 
@@ -30,7 +29,7 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
 
         mUsrCfgChanged = false;
 
-        final EditTextPreference preference1 = findPreference(RCApp.PREF_HTTP_CFG_URL);
+        final EditTextPreference preference1 = findPreference(WCApp.PREF_HTTP_CFG_URL);
 
         if (preference1 != null) {
             preference1.setSummaryProvider(new Preference.SummaryProvider() {
@@ -60,7 +59,7 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
-        final EditTextPreference preference2 = findPreference(RCApp.PREF_HTTP_CFG_USER);
+        final EditTextPreference preference2 = findPreference(WCApp.PREF_HTTP_CFG_USER);
 
         if (preference2 != null) {
             preference2.setSummaryProvider(new Preference.SummaryProvider() {
@@ -90,7 +89,7 @@ public class MainSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
-        final EditTextPreference preference3 = findPreference(RCApp.PREF_HTTP_CFG_PSW);
+        final EditTextPreference preference3 = findPreference(WCApp.PREF_HTTP_CFG_PSW);
 
         if (preference3 != null) {
             preference3.setSummaryProvider(new Preference.SummaryProvider() {

@@ -15,7 +15,7 @@ public class SampleGattAttributes {
     private final static String[] MAIN_SERVICE = {"00009ef0-0000-1000-8000-00805f9b34fb"};
     private final static String BT_WEBCAM_CFG_CHAR = "00009ef1-0000-1000-8000-00805f9b34fb";
     static String BT_WEBCAM_NOTI_CHAR1 = "00009ef2-0000-1000-8000-00805f9b34fb";
-    static String BLE_NAME_PREFIX = "babaika";
+    static String BLE_NAME_PREFIX = "babaikaWC";
 
     static {
         write_attributes.put(BT_WEBCAM_CFG_CHAR,  BabaikaWebCam.class);

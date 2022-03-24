@@ -1,21 +1,24 @@
 package com.sggdev.wcwebcameracontrol;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Application;
-import android.bluetooth.BluetoothDevice;
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.provider.Settings;
 import android.util.Base64;
+import android.view.ContextThemeWrapper;
+
+import androidx.appcompat.app.AlertDialog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -23,12 +26,9 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
-public class RCApp extends Application {
+public class WCApp extends Application {
 
     class DevicesHolderList extends ArrayList<DeviceItem> {
-
-        private static final String BLE_PREF_DEVICE_DB = "db";
-        private static final String BLE_PREF_DEVICE_LIST = "DeviceList";
 
         private int mDeviceListUpdate = 0;
         private boolean mDeviceItemsChanged = false;
@@ -38,36 +38,15 @@ public class RCApp extends Application {
         }
 
         void loadFromDB() {
-            SharedPreferences sp = getSharedPreferences(BLE_PREF_DEVICE_DB, MODE_PRIVATE);
-            String res = sp.getString(BLE_PREF_DEVICE_LIST, null);
-            if (res != null) {
-                try {
-                    JSONArray items = new JSONArray(res);
-                    for (int i = 0; i < items.length();i++) {
-                        JSONObject obj = items.getJSONObject(i);
-                        add(new DeviceItem(RCApp.this, obj));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
+            ChatDatabase db = ChatDatabase.getInstance(WCApp.this);
+            List<JSONObject> items = db.getAllDevices();
+            for (JSONObject obj : items)
+                add(new DeviceItem(WCApp.this, obj));
         }
 
         void saveToDB() {
-            SharedPreferences sp = getSharedPreferences(BLE_PREF_DEVICE_DB, MODE_PRIVATE);
-            SharedPreferences.Editor spEd = sp.edit();
-            spEd.remove(BLE_PREF_DEVICE_LIST);
-            JSONArray items = new JSONArray();
-            try {
-                for (int i = 0; i < size(); i++) {
-                    JSONObject obj = new JSONObject(get(i).saveState());
-                    items.put(obj);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            spEd.putString(BLE_PREF_DEVICE_LIST, items.toString());
-            spEd.apply();
+            ChatDatabase db = ChatDatabase.getInstance(WCApp.this);
+            db.addOrUpdateDevices(this);
         }
 
         void completeItem(DeviceItem aItem,
@@ -108,21 +87,42 @@ public class RCApp extends Application {
             aItem.complete("", deviceBLEName, deviceBLEAddress);
         }
 
-        void incItemRate(DeviceItem n_obj) {
-            DeviceItem m_obj = findItem(n_obj);
+        void setDeviceProps(DeviceItem aItem,
+                            int mDeviceColor,
+                            int mDeviceIndex) {
+            aItem.setProps(mDeviceColor, mDeviceIndex);
+            DeviceItem m_obj = findItem(aItem);
             if (m_obj != null) {
-                m_obj.incRate();
+                if (m_obj != aItem)
+                    m_obj.setProps(mDeviceColor, mDeviceIndex);
                 mDeviceItemsChanged = true;
                 updateDeviceItems();
             }
         }
 
         DeviceItem findItem(DeviceItem aobj) {
-            for (DeviceItem obj : mDeviceItems) {
-                if (obj.equals(aobj)) {
+            for (DeviceItem obj : mDeviceItems)
+                if (obj.equals(aobj))
                     return obj;
-                }
-            }
+
+            return null;
+        }
+
+        DeviceItem findItem(long devId) {
+            if (devId > 0)
+                for (DeviceItem obj : mDeviceItems)
+                    if (obj.getDbId() == devId)
+                        return obj;
+
+            return null;
+        }
+
+        DeviceItem findItem(String devHostName) {
+            if (devHostName != null && devHostName.length() > 0)
+                for (DeviceItem obj : mDeviceItems)
+                    if (obj.getDeviceServerName().equals(devHostName))
+                        return obj;
+
             return null;
         }
 
@@ -139,12 +139,11 @@ public class RCApp extends Application {
 
         void removeItem(DeviceItem n_obj) {
             DeviceItem r_obj = null;
-            for (DeviceItem obj : mDeviceItems) {
+            for (DeviceItem obj : mDeviceItems)
                 if (obj.equals(n_obj)) {
                     r_obj = obj;
                     break;
                 }
-            }
             if (r_obj != null) {
                 mDeviceItemsChanged = true;
                 mDeviceItems.remove(r_obj);
@@ -289,5 +288,68 @@ public class RCApp extends Application {
         super.onCreate();
 
         mDeviceItems = new DevicesHolderList();
+        WCHTTPClient wchttpClient = WCHTTPClientHolder.getInstance(this);
+        wchttpClient.setConfigInterface(new WCHTTPClient.WCClientConfigInterface() {
+            @Override
+            public String getUserName() {
+                return getHttpCfgUserName();
+            }
+
+            @Override
+            public String getHostURL() {
+                return getHttpCfgServerUrl();
+            }
+
+            @Override
+            public String getUserPassword() {
+                return getHttpCfgUserPsw();
+            }
+
+            @Override
+            public String getDeviceName() {
+                return getHttpCfgDevice();
+            }
+
+            @Override
+            public String getSID() {
+                return getHttpCfgSID();
+            }
+        });
+        wchttpClient.addStateChangeListener(new WCHTTPClient.OnStateChangeListener() {
+
+            @Override
+            public void onConnect(String sid) {
+                setHttpCfgSID(sid);
+            }
+
+            @Override
+            public void onDisconnect(int code) {
+                setHttpCfgSID("");
+            }
+
+            @Override
+            public void onClientStateChanged(int newState) { /* none */ }
+
+            @Override
+            public void onLoginError(int errCode, String errStr) { /* none */ }
+        });
+
+    }
+
+    void alertWrongUser(Activity act,
+                        String errorStr,
+                        DialogInterface.OnClickListener onPositive) {
+        String msg = getString(R.string.alert_edit_config);
+        if (errorStr != null)
+            msg = msg.concat(getString(R.string.details_prefix)).concat(errorStr);
+        final String msgTxt = msg;
+        act.runOnUiThread (new Thread(() -> new AlertDialog.Builder(
+                new ContextThemeWrapper(act, R.style.AlertDialogCustom))
+                .setTitle(R.string.alert_refused_connection)
+                .setMessage(msgTxt)
+                .setPositiveButton(android.R.string.yes, onPositive)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show()));
     }
 }

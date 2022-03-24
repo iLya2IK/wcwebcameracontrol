@@ -16,6 +16,8 @@ public class WCRESTProtocol {
     public static final int REST_ERR_MALFORMED_REQUEST = 12;
 
     public static final int REST_ERR_NETWORK           = 13;
+    public static final int REST_ERR_NETWORK_ON_LOGIN  = 14;
+    public static final int REST_DISCONNECT_BY_USER    = 15;
 
     public static final String [] REST_RESPONSE_ERRORS  = {
                                   "NO_ERROR",
@@ -31,7 +33,9 @@ public class WCRESTProtocol {
                                   "NO_DATA_RETURNED",
                                   "EMPTY_REQUEST",
                                   "MALFORMED_REQUEST",
-                                  "REST_ERR_NETWORK"};
+                                  "REST_ERR_NETWORK",
+                                  "REST_ERR_NETWORK_ON_LOGIN",
+                                  "REST_DISCONNECT_BY_USER"};
 
 
     public static final String JSON_OK        = "OK";

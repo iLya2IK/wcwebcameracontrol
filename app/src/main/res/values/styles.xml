@@ -1,12 +1,59 @@
 <resources>
 
+    <style name="button" parent="@style/Widget.AppCompat.ImageButton">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <style name="AlertButton"
+        parent="android:Widget.DeviceDefault.Button">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:background">@drawable/button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <style name="AlertTitle"
+        parent="@style/Base.DialogWindowTitle.AppCompat">
+        <item name="android:background">@drawable/header_line</item>
+        <item name="android:padding">10dp</item>
+    </style>
+
+    <style name="AlertDialogCustom" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:background">@color/buttonColor</item>
+        <item name="android:windowBackground">@drawable/button_enabled</item>
+        <item name="android:windowTitleStyle">@style/AlertTitle</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textColorPrimary">@color/colorText</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondary</item>
+        <item name="android:textColorTertiary">@color/colorAccent</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textSize">14sp</item>
+        <item name="buttonBarButtonStyle">@style/AlertButton</item>
+    </style>
+
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
+        <item name="alertDialogTheme">@style/AlertDialogCustom</item>
+        <item name="materialAlertDialogTheme">@style/AlertDialogCustom</item>
         <item name="android:windowBackground">@color/colorPrimaryDark</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorSecondary">@color/colorPrimary</item>
+        <item name="colorSecondaryVariant">@color/colorPrimary</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textColorPrimary">@color/colorText</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondary</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:buttonStyle">@style/button</item>
     </style>
 	
 	<style name="AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
@@ -18,12 +65,12 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">24sp</item>
         <item name="android:layout_marginTop">8dp</item>
-        <item name="android:textColor">@android:color/primary_text_dark</item>
+        <item name="android:textColor">@color/colorPrimary</item>
     </style>
 
     <style name="TextViewSecondary" parent="TextViewPrimary">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@color/gray_dove_light</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
     </style>
 
 </resources>

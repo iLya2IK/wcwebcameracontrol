@@ -24,26 +24,32 @@
                 android:gravity="center"
                 android:orientation="horizontal">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/img_con_indicator"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/disconnected" />
+                    style="@style/button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:scaleType="fitXY"
+                    app:srcCompat="@drawable/disconnected"
+                    tools:ignore="SpeakableTextPresentCheck" />
 
                 <TextView
-                    android:id="@+id/textView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="4"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
-
-                <ImageView
-                    android:id="@+id/img_open_config"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:id="@+id/username_tv"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
                     android:layout_weight="1"
-                    app:srcCompat="@android:drawable/ic_menu_preferences" />
+                    android:background="@drawable/header_line"
+                    android:gravity="center"
+                    android:padding="2dp"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+                <ImageButton
+                    android:id="@+id/img_open_config"
+                    style="@style/button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:srcCompat="@android:drawable/ic_menu_preferences"
+                    tools:ignore="SpeakableTextPresentCheck" />
             </LinearLayout>
 
             <ListView
