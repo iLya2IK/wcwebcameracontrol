@@ -11,6 +11,7 @@ import android.animation.Animator;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -69,12 +70,14 @@ import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_HOST_NAME;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_INDEX;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_LST_SYNC;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_CONNECTED;
 import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED;
 import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED_BY_USER;
+import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED_RETRY_OVER;
 import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_USER_CFG_INCORRECT;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.*;
 
@@ -86,11 +89,15 @@ public class MainActivity extends AppCompatActivity {
     private WCApp myApp;
     private WCApp.DevicesHolderList DevList() { return  myApp.mDeviceItems; }
 
+    public static final String ACTION_LAUNCH_CHAT = "ACTION_LAUNCH_CHAT";
+    public static final String ACTION_LAUNCH_CONFIG = "ACTION_LAUNCH_CONFIG";
 
-    private static final int DEVICE_LIST_REFRESH_PERIOD = 500;
+    private static final int DEVICE_SYNC_PERIOD = 500;
+    private static final int DEVICE_LIST_REFRESH_PERIOD = 2000;
     private static final int DEVICE_SERVER_REQUEST_PERIOD = 5000;
     private static final int DEVICE_SERVER_CONNECT_COOLDOWN = 3500;
     private static final int DEVICE_BLE_SCAN_TIMEOUT = 10000;
+    private static final int DEVICE_DB_REFRESH_TIMEOUT = 10000;
 
     private DeviceVariantList mAvailableDevices;
     private DeviceAdapter mAvailableDevicesAdapter;
@@ -103,10 +110,13 @@ public class MainActivity extends AppCompatActivity {
     private int bleScannerState = BS_SHUTDOWN;
 
     private int httpServerCooldown = 0;
+    private int dbCooldown = 0;
 
     private int ACTIVITY_STATE = STATE_DEVICE_LISTING;
     private Timer syntimer;
     private SynchroTask syntask;
+    private IdleCheckTask idletask1;
+    private IdleDeviceUpdateTask idletask2;
     private AnimatorSet blinkanimation;
     private ImageView mBLEIcon;
     private ImageButton mUserConnect;
@@ -118,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 1002;
     private boolean ENABLED_INTERNET_FEATURE = false;
     private boolean ENABLED_BLE_FEATURE = false;
+    private boolean ENABLED_ALARM_FEATURE = false;
 
     private final ScanCallback leScanCallback =
             new ScanCallback () {
@@ -147,6 +158,72 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
 
+    private class IdleCheckTask extends TimerTask {
+        public void run() {
+            if (mAvailableDevices.size() > 0) {
+                WCHTTPResync.Builder sync = new WCHTTPResync.Builder(myApp, null);
+                sync.addNotifyListener()
+                        .addOnFinishListener(new WCHTTPResync.OnSyncFinished() {
+                            @Override
+                            public boolean onNewMessagesSummary(Context context, int totalAmount, List<WCChat.DeviceMsgsCnt> aList) {
+                                mAvailableDevices.lock();
+                                try {
+                                    for (BLEDeviceVariant deviceVariant : mAvailableDevices)
+                                        if (deviceVariant.isServerCompleteDevice()) {
+                                            if (totalAmount > 0) {
+                                                boolean not_found = true;
+                                                for (WCChat.DeviceMsgsCnt devCnt : aList) {
+                                                    if (deviceVariant.item.getDbId() == devCnt.getDbId() ||
+                                                            deviceVariant.item.getDeviceServerName().equals(devCnt.getName())) {
+                                                        deviceVariant.item.setUnreadedMsgs(devCnt.getCnt());
+                                                        not_found = false;
+                                                        break;
+                                                    }
+                                                }
+                                                if (not_found)
+                                                    deviceVariant.item.setUnreadedMsgs(0);
+                                            } else
+                                                deviceVariant.item.setUnreadedMsgs(0);
+                                        }
+                                } finally {
+                                    mAvailableDevices.unlock();
+                                }
+                                return false;
+                            }
+
+                            @Override
+                            public void onNewMessages(Context context, List<WCChat.ChatMessage> aList, List<String> aDevices) {
+                            }
+
+                            @Override
+                            public void onError(Context context, int state, String aError) {
+                            }
+                        });
+                sync.doResync();
+            }
+        }
+    }
+
+    private class IdleDeviceUpdateTask extends TimerTask {
+
+        public void run() {
+            if (mAvailableDevices.size() > 0) {
+                DevList().beginUpdate();
+                mAvailableDevices.lock();
+                try {
+                    for (BLEDeviceVariant bd : mAvailableDevices)
+                        if (bd.isServerCompleteDevice())
+                            DevList().saveItem(bd.item);
+                } finally {
+                    mAvailableDevices.unlock();
+                    DevList().endUpdate();
+                }
+                refreshAvailableDevicesThreadSafe();
+            }
+        }
+
+    }
+
     private class SynchroTask extends TimerTask {
 
         @TargetApi(23)
@@ -164,19 +241,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void run() {
-            DevList().beginUpdate();
-            mAvailableDevices.lock();
-            try {
-                for (BLEDeviceVariant bd : mAvailableDevices)
-                    if (bd.isServerCompleteDevice())
-                        DevList().saveItem(bd.item);
-            } finally {
-                mAvailableDevices.unlock();
-                DevList().endUpdate();
-            }
-            refreshAvailableDevicesThreadSafe();
-
-            httpServerCooldown -= DEVICE_LIST_REFRESH_PERIOD;
+            httpServerCooldown -= DEVICE_SYNC_PERIOD;
             if (httpServerCooldown < 0) httpServerCooldown = 0;
 
 
@@ -187,6 +252,10 @@ public class MainActivity extends AppCompatActivity {
                 } else
                 if (httpClient.state() == CS_CONNECTED) {
                     httpServerCooldown = DEVICE_SERVER_REQUEST_PERIOD;
+
+                    httpClient.recvMsgs(MainActivity.this, false);
+                    httpClient.recvSnaps(MainActivity.this);
+
                     httpClient.startScanning(MainActivity.this,
                             (resultCode, resultMsg) -> {
                                 Object res = resultMsg.opt(JSON_DEVICES);
@@ -258,6 +327,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void restartAsyncTimer() {
         syntask  = new SynchroTask();
+        idletask1 = new IdleCheckTask();
+        idletask2 = new IdleDeviceUpdateTask();
         syntimer = new Timer();
     }
 
@@ -280,18 +351,14 @@ public class MainActivity extends AppCompatActivity {
     private final WCHTTPClient.OnStateChangeListener httpInterface = new WCHTTPClient.OnStateChangeListener() {
         @Override
         public void onConnect(String sid) {
-            runOnUiThread (new Thread(() -> {
-                mUserName.setText(myApp.getHttpCfgUserName());
-                mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.connected));
-            }));
+            runOnUiThread (new Thread(() -> afterConnectionChanged(CS_CONNECTED)));
         }
 
         @Override
         public void onDisconnect(int errCode) {
             httpServerCooldown = DEVICE_SERVER_CONNECT_COOLDOWN;
             runOnUiThread (new Thread(() -> {
-                mUserName.setText(myApp.getHttpCfgUserName());
-                mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.disconnected));
+                afterConnectionChanged(CS_DISCONNECTED);
                 Toast toast = Toast.makeText(getApplicationContext(),
                         String.format(getString(R.string.rest_error), errCode, REST_RESPONSE_ERRORS[errCode]),
                         Toast.LENGTH_LONG);
@@ -427,6 +494,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case CS_USER_CFG_INCORRECT:
                     case CS_DISCONNECTED_BY_USER:
+                    case CS_DISCONNECTED_RETRY_OVER:
                     {
                         wchttpClient.retryConnect();
                         restartScanMode();
@@ -440,6 +508,20 @@ public class MainActivity extends AppCompatActivity {
             } else
                 checkPermissions();
         });
+
+        final Intent intent = getIntent();
+        String chatToLaunch = intent.getStringExtra(ACTION_LAUNCH_CHAT);
+        if ((chatToLaunch != null) && (chatToLaunch.length() > 0)) {
+            final DeviceItem dev = myApp.mDeviceItems.findItem(chatToLaunch);
+            if (dev != null) {
+                new Handler().postDelayed(() -> runOnUiThread(() -> launchDeviceChat(dev)), 1000);
+            }
+        } else {
+            String confToLaunch = intent.getStringExtra(ACTION_LAUNCH_CONFIG);
+            if ((confToLaunch != null) && (confToLaunch.length() > 0)) {
+                new Handler().postDelayed(() -> runOnUiThread(this::launchMainConfig), 1000);
+            }
+        }
     }
 
     private void launchMainConfig() {
@@ -494,14 +576,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        WCHTTPClientHolder.getInstance(this).addStateChangeListener(httpInterface);
-
         checkPermissions();
-        // Ensures Bluetooth is available on the device and it is enabled. If not,
-        // displays a dialog requesting user permission to enable Bluetooth.
-        if (ACTIVITY_STATE == STATE_DEVICE_LISTING) {
-            restartScanMode();
-        }
     }
 
     private void restartScanMode() {
@@ -519,7 +594,9 @@ public class MainActivity extends AppCompatActivity {
         //This will be called after onCreate or your activity is resumed
         if (syntimer == null) {
             restartAsyncTimer();
-            syntimer.schedule(syntask, 500, DEVICE_LIST_REFRESH_PERIOD);
+            syntimer.schedule(syntask, 500, DEVICE_SYNC_PERIOD);
+            syntimer.schedule(idletask1, 1000, DEVICE_DB_REFRESH_TIMEOUT);
+            syntimer.schedule(idletask2, 500, DEVICE_LIST_REFRESH_PERIOD);
         }
     }
 
@@ -529,6 +606,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (syntask != null)
             syntask.cancel();
+        if (idletask1 != null)
+            idletask1.cancel();
+        if (idletask2 != null)
+            idletask2.cancel();
         if (syntimer != null) {
             syntimer.cancel();
             syntimer.purge();
@@ -536,13 +617,16 @@ public class MainActivity extends AppCompatActivity {
 
         syntimer = null;
         syntask = null;
+        idletask2= null;
+        idletask1= null;
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        WCHTTPClientHolder.getInstance(this).removeStateChangeListener(httpInterface);
+        if (ENABLED_INTERNET_FEATURE)
+            WCHTTPClientHolder.getInstance(this).removeStateChangeListener(httpInterface);
 
         DevList().saveToDB();
 
@@ -594,10 +678,18 @@ public class MainActivity extends AppCompatActivity {
                 int deviceColor = data.getIntExtra(EXTRAS_DEVICE_COLOR, DEFAULT_DEVICE_COLOR);
                 int deviceIndex = data.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
 
-                DeviceItem di = mAvailableDevices.add(deviceHostName, deviceAddress, deviceName);
+                DeviceItem di = null;
+
+                if (deviceHostName.length() > 0)
+                    di = DevList().findItem(deviceHostName);
+
                 DevList().beginUpdate();
                 try {
-                    DevList().saveItem(di);
+                    if (di == null) {
+                        di = mAvailableDevices.add(deviceHostName, deviceAddress, deviceName);
+                        DevList().saveItem(di);
+                    } else
+                        di.complete(deviceHostName, deviceName, deviceAddress);
                     DevList().setDeviceProps(di, deviceColor, deviceIndex);
                 } finally {
                     DevList().endUpdate();
@@ -612,12 +704,18 @@ public class MainActivity extends AppCompatActivity {
                 String deviceHostName = data.getStringExtra(EXTRAS_DEVICE_HOST_NAME);
                 int deviceColor = data.getIntExtra(EXTRAS_DEVICE_COLOR, DEFAULT_DEVICE_COLOR);
                 int deviceIndex = data.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
+                String lstSync = data.getStringExtra(EXTRAS_DEVICE_LST_SYNC);
 
-                DeviceItem di = mAvailableDevices.add(deviceHostName);
+                DeviceItem di = DevList().findItem(deviceHostName);
+
                 DevList().beginUpdate();
                 try {
-                    DevList().saveItem(di);
+                    if (di == null) {
+                        di = mAvailableDevices.add(deviceHostName);
+                        DevList().saveItem(di);
+                    }
                     DevList().setDeviceProps(di, deviceColor, deviceIndex);
+                    DevList().setDeviceSyncProps(di, lstSync, 0);
                 } finally {
                     DevList().endUpdate();
                 }
@@ -637,12 +735,22 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    private void afterConnectionChanged(int aState) {
+        mUserName.setText(myApp.getHttpCfgUserName());
+
+        if (aState == CS_CONNECTED)
+            mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.connected));
+        else
+            mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.disconnected));
+    }
+
     private class DeviceAdapter extends ArrayAdapter<BLEDeviceVariant> {
 
         public DeviceAdapter(Context context) {
             super(context, R.layout.two_line_listitem_ico, mAvailableDevices);
         }
 
+        @SuppressLint("DefaultLocale")
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             BLEDeviceVariant ble;
@@ -730,10 +838,17 @@ public class MainActivity extends AppCompatActivity {
 
             TextView name_tv = convertView.findViewById(R.id.text1);
             TextView mac_tv  = convertView.findViewById(R.id.text2);
+            TextView msg_cnt = convertView.findViewById(R.id.new_msgs);
             ImageView img    = convertView.findViewById(R.id.icon);
             ImageView img_id = convertView.findViewById(R.id.icon_id);
             ImageView img_presence = convertView.findViewById(R.id.icon_presence);
             ImageView img_cfg = convertView.findViewById(R.id.icon_cfg);
+
+            if (ble.item.getUnreadedMsgs() > 0) {
+                msg_cnt.setVisibility(View.VISIBLE);
+                msg_cnt.setText(String.format("%d", ble.item.getUnreadedMsgs()));
+            } else
+                msg_cnt.setVisibility(View.GONE);
 
             if (new_View) {
                 int pW = parent.getWidth();
@@ -795,11 +910,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkPermissions() {
-        String [] permissions = new String [4];
-        permissions[0] = ACCESS_FINE_LOCATION;
-        permissions[1] = INTERNET;
-        permissions[2] = BLUETOOTH;
-        permissions[3] = BLUETOOTH_ADMIN;
+        List<String> permissions = new ArrayList<>();
+        permissions.add(ACCESS_FINE_LOCATION);
+        permissions.add(INTERNET);
+        permissions.add(BLUETOOTH);
+        permissions.add(BLUETOOTH_ADMIN);
 
         List<String> listPermissionsNeeded = new ArrayList<>();
         for (String permission : permissions) {
@@ -814,6 +929,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             setInternetFeatures(true);
             setBLEFeatures(true);
+        }
+
+        // Ensures Bluetooth is available on the device and it is enabled. If not,
+        // displays a dialog requesting user permission to enable Bluetooth.
+        if (ACTIVITY_STATE == STATE_DEVICE_LISTING) {
+            restartScanMode();
         }
     }
 
@@ -850,9 +971,12 @@ public class MainActivity extends AppCompatActivity {
     private void setInternetFeatures(boolean value) {
         ENABLED_INTERNET_FEATURE = value;
         if (value) {
+            WCHTTPClientHolder.getInstance(this).addStateChangeListener(httpInterface);
             WCHTTPClientHolder.getInstance(this).getClient();
         } else {
+            WCHTTPClientHolder.getInstance(this).removeStateChangeListener(httpInterface);
             WCHTTPClientHolder.getInstance(this).releaseClient();
+            WCHTTPResync.stopWCHTTPBackgroundWork(this);
         }
     }
 
@@ -861,7 +985,6 @@ public class MainActivity extends AppCompatActivity {
         if (!value)
             denyToBLEScan();
     }
-
 
     class DeviceVariantList extends ArrayList<BLEDeviceVariant> {
 

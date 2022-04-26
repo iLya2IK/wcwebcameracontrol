@@ -1,8 +1,5 @@
 package com.sggdev.wcwebcameracontrol;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class BLEDeviceVariant implements Comparable<BLEDeviceVariant> {
     static final int DEVICE_VARIANT_BLE_ITEM    = 8;
     static final int DEVICE_VARIANT_SEPARATOR   = 4;

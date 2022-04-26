@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class BabaikaConfigNotif  extends BabaikaNotiCommand {
 
-    class BabaikaConfigItem {
+    static class BabaikaConfigItem {
 
         public static final int CFG_OPT_PASSWORD = 1;
         public static final int CFG_OPT_READONLY = 2;
@@ -59,7 +59,7 @@ public class BabaikaConfigNotif  extends BabaikaNotiCommand {
         }
     }
 
-    class BabaikaModConfigItem extends BabaikaConfigItem {
+    static class BabaikaModConfigItem extends BabaikaConfigItem {
 
         private String mValue;
 
@@ -94,23 +94,20 @@ public class BabaikaConfigNotif  extends BabaikaNotiCommand {
     BabaikaConfigNotif(String chuuid) {
         super("", "", "","", false);
         setNotification(new BabaikaDeviceConfigNotif(chuuid));
-        setOnValueChangedListener(new OnValueChangedListener() {
-            @Override
-            public void onChange() {
-                String v = getNoti().formatted_value;
-                try {
-                    JSONObject fields = new JSONObject(v);
-                    for (String pfield: possib_fields.keySet()) {
-                        if (fields.has(pfield)) {
-                            String val = fields.optString(pfield, "");
-                            BabaikaConfigItem oldval = possib_fields.get(pfield);
-                            if (oldval != null)
-                                doFieldValueChanging(pfield, val);
-                        }
+        setOnValueChangedListener(() -> {
+            String v = getNoti().formatted_value;
+            try {
+                JSONObject fields = new JSONObject(v);
+                for (String pfield: possib_fields.keySet()) {
+                    if (fields.has(pfield)) {
+                        String val = fields.optString(pfield, "");
+                        BabaikaConfigItem oldval = possib_fields.get(pfield);
+                        if (oldval != null)
+                            doFieldValueChanging(pfield, val);
                     }
-                } catch (JSONException | NullPointerException e) {
-                    e.printStackTrace();
                 }
+            } catch (JSONException | NullPointerException e) {
+                e.printStackTrace();
             }
         });
     }

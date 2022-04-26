@@ -16,14 +16,11 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
-import static android.bluetooth.BluetoothGattCharacteristic.PERMISSION_WRITE;
 
 public class BluetoothService extends Service {
     private final static String TAG = BluetoothService.class.getSimpleName();
@@ -33,7 +30,7 @@ public class BluetoothService extends Service {
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private BluetoothGattCharacteristic mWriteCharacteristic = null;
-    private ArrayList<BluetoothGattCharacteristic> mNotificationCharacteristics = new ArrayList<>();
+    private final ArrayList<BluetoothGattCharacteristic> mNotificationCharacteristics = new ArrayList<>();
     private int mConnectionState = STATE_DISCONNECTED;
     private boolean shouldClose  = false;
     private boolean mAutoSendMode = false;
@@ -46,25 +43,25 @@ public class BluetoothService extends Service {
     private static final int STATE_CONNECTED = 2;
 
     public final static String ACTION_GATT_CONNECTED =
-            "com.example.remotesensorcontrol.le.ACTION_GATT_CONNECTED";
+            "wcwebcameracontrol.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
-            "com.example.remotesensorcontrol.le.ACTION_GATT_DISCONNECTED";
+            "wcwebcameracontrol.le.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED =
-            "com.example.remotesensorcontrol.le.ACTION_GATT_SERVICES_DISCOVERED";
+            "wcwebcameracontrol.le.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_NOTIFICATION_GRANTED =
-            "com.example.remotesensorcontrol.le.ACTION_NOTIFICATION_GRANTED";
+            "wcwebcameracontrol.le.ACTION_NOTIFICATION_GRANTED";
     public final static String ACTION_NOTIFICATION_CANCELED =
-            "com.example.remotesensorcontrol.le.ACTION_NOTIFICATION_CANCELED";
+            "wcwebcameracontrol.le.ACTION_NOTIFICATION_CANCELED";
     public final static String ACTION_DATA_AVAILABLE =
-            "com.example.remotesensorcontrol.le.ACTION_DATA_AVAILABLE";
+            "wcwebcameracontrol.le.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
-            "com.example.remotesensorcontrol.le.EXTRA_DATA";
+            "wcwebcameracontrol.le.EXTRA_DATA";
     public final static String EXTRA_DATA_CHAR =
-            "com.example.remotesensorcontrol.le.EXTRA_DATA_CHAR";
+            "wcwebcameracontrol.le.EXTRA_DATA_CHAR";
     public final static String ACTION_INPUT_CHARACTERISTIC_DISCOVERED =
-            "com.example.remotesensorcontrol.le.ACTION_INPUT_CHARACTERISTIC_DISCOVERED";
+            "wcwebcameracontrol.le.ACTION_INPUT_CHARACTERISTIC_DISCOVERED";
     public final static String ACTION_SENDING_SUCCEED =
-            "com.example.remotesensorcontrol.le.ACTION_SENDING_SUCCEED";
+            "wcwebcameracontrol.le.ACTION_SENDING_SUCCEED";
 
     public BluetoothGatt getBleGatt() {
         return mBluetoothGatt;
@@ -211,19 +208,18 @@ public class BluetoothService extends Service {
         // This is special handling for the Heart Rate Measurement profile.  Data parsing is
         // carried out as per profile specifications:
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if (action.equals(ACTION_DATA_AVAILABLE))
-        {
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                intent.putExtra(EXTRA_DATA_CHAR,  characteristic.getUuid().toString());
-                intent.putExtra(EXTRA_DATA, data);
-            }
-        } else if (action.equals(ACTION_NOTIFICATION_GRANTED))
-        {
-            intent.putExtra(EXTRA_DATA_CHAR,  characteristic.getUuid().toString());
-        } else if (action.equals(ACTION_NOTIFICATION_CANCELED))
-        {
-            intent.putExtra(EXTRA_DATA_CHAR,  characteristic.getUuid().toString());
+        switch (action) {
+            case ACTION_DATA_AVAILABLE:
+                final byte[] data = characteristic.getValue();
+                if (data != null && data.length > 0) {
+                    intent.putExtra(EXTRA_DATA_CHAR, characteristic.getUuid().toString());
+                    intent.putExtra(EXTRA_DATA, data);
+                }
+                break;
+            case ACTION_NOTIFICATION_GRANTED:
+            case ACTION_NOTIFICATION_CANCELED:
+                intent.putExtra(EXTRA_DATA_CHAR, characteristic.getUuid().toString());
+                break;
         }
         sendBroadcast(intent);
     }

@@ -5,65 +5,85 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/layout_group_chat"
+    <com.sggdev.wcwebcameracontrol.DeviceIconView
+        android:id="@+id/device_icon_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
         android:orientation="vertical"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constrainedHeight="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar_gchannel"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:theme="@style/Widget.AppCompat.Toolbar"
-            app:popupTheme="@style/Theme.AppCompat.Light">
-
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_gchat"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+
         android:layout_marginBottom="16dp"
         app:layout_constrainedHeight="true"
-        app:layout_constraintBottom_toTopOf="@+id/text_gchat_indicator"
-        app:layout_constraintTop_toBottomOf="@+id/layout_group_chat" />
+        app:layout_constraintTop_toBottomOf="@+id/device_icon_view"
+        app:layout_constraintBottom_toTopOf="@+id/layout_gchat_chatbox" />
 
     <TextView
-        android:id="@+id/text_gchat_indicator"
+        android:id="@+id/stamp_cur_date"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:background="@drawable/date_label_background_stamp"
+        android:textColor="@color/colorTextLight"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/view"
+
+        app:layout_constraintTop_toBottomOf="@+id/device_icon_view"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <View
-        android:id="@+id/view"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#e0e0e0"
-        app:layout_constraintBottom_toTopOf="@+id/layout_gchat_chatbox" />
+    <ImageButton
+        android:id="@+id/stamp_scroll_down"
+
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:visibility="gone"
+        android:src="@drawable/ic_baseline_keyboard_arrow_down_24"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        style="@style/round_button"
+
+        app:layout_constraintBottom_toTopOf="@+id/layout_gchat_chatbox"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <RelativeLayout
         android:id="@+id/layout_gchat_chatbox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
+        <View
+            android:id="@+id/view"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#e0e0e0"
+            android:layout_alignParentTop="true" />
+
+        <ImageButton
+            android:id="@+id/button_gchat_add_param"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="2dp"
+            style="@style/button"
+            android:src="@drawable/ic_baseline_params_add_24" />
 
         <EditText
-            android:layout_marginStart="16dp"
             android:id="@+id/edit_gchat_message"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
+            android:layout_height="48dp"
+            android:layout_alignParentTop="true"
             android:layout_toStartOf="@+id/button_gchat_send"
-            android:background="@android:color/transparent"
+            android:layout_toEndOf="@+id/button_gchat_add_param"
+            android:layout_marginTop="2dp"
             android:hint="@string/enter_command"
             android:inputType="text"
             android:maxLines="6"
@@ -74,9 +94,20 @@
             android:layout_width="64dp"
             android:layout_height="48dp"
             android:layout_alignParentEnd="true"
-            android:background="?attr/selectableItemBackground"
-            android:text="@string/send"
-            android:textColor="@color/colorPrimary" />
+            android:layout_marginTop="2dp"
+            android:text="@string/send"  />
+
+        <TableLayout
+            android:id="@+id/table_gchat_send"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/edit_gchat_message"
+            android:layout_toEndOf="@+id/button_gchat_add_param"
+            android:animateLayoutChanges="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:layout_alignParentEnd="true">
+        </TableLayout>
 
     </RelativeLayout>
 

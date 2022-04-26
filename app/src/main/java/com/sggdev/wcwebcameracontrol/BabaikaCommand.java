@@ -1,13 +1,15 @@
 package com.sggdev.wcwebcameracontrol;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class BabaikaCommand extends BabaikaItem {
-    private static String BLE_STATE_KEY = "key";
-    private static String BLE_STATE_COMMENT = "comment";
-    private static String BLE_STATE_COMMAND = "command";
-    private static String BLE_STATE_REPEATABLE = "repeatable";
+    private static final String BLE_STATE_KEY = "key";
+    private static final String BLE_STATE_COMMENT = "comment";
+    private static final String BLE_STATE_COMMAND = "command";
+    private static final String BLE_STATE_REPEATABLE = "repeatable";
 
     private String key;
     private String command;
@@ -62,25 +64,13 @@ public class BabaikaCommand extends BabaikaItem {
     String getCommand() {
         return command;
     }
-    protected void setCommand(String value) { command = value; }
-
     String getKey() {
         return key;
     }
-    protected void setKey(String value) { key = value; }
-
-
     String getComment() {
         return comment;
     }
-    protected void setComment(String value) { comment = value; }
-
-    String getFormattedCommand() {
-        return getCommand();
-    }
-
-    boolean isRepeatable() {return repeatable; }
-
+    @NonNull
     public String toString() {
         return key;
     }

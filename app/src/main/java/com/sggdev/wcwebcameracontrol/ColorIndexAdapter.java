@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class ColorIndexAdapter extends RecyclerView.Adapter<ColorIndexAdapter.CIViewHolder> {
-    private List<DeviceIconID> iconList;
+    private final List<DeviceIconID> iconList;
     private OnItemChangedListener mOnItemChangedListener;
     private int selection = 0;
 
@@ -35,27 +35,24 @@ public class ColorIndexAdapter extends RecyclerView.Adapter<ColorIndexAdapter.CI
         void bind(final DeviceIconID ble_id) {
             iv.setImageDrawable(ble_id);
 
-            if (selection == getAdapterPosition()) {
+            if (selection == getBindingAdapterPosition()) {
                 iv.setAlpha(1f);
             } else {
                 iv.setAlpha(0.5f);
             }
 
-            iv.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    iv.setAlpha(1f);
-                    if (selection != getAdapterPosition()) {
-                        notifyItemChanged(selection);
-                        selection = getAdapterPosition();
-                        doItemChanged(selection);
-                    }
+            iv.setOnClickListener(v -> {
+                iv.setAlpha(1f);
+                if (selection != getBindingAdapterPosition()) {
+                    notifyItemChanged(selection);
+                    selection = getBindingAdapterPosition();
+                    doItemChanged(selection);
                 }
             });
         }
     }
 
-    public ColorIndexAdapter(List<DeviceIconID> aIconList, int mSelColor, int mSelDigit) {
+    public ColorIndexAdapter(List<DeviceIconID> aIconList) {
         this.iconList = aIconList;
     }
 

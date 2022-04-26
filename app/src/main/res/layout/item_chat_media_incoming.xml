@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp">
+
+    <TextView
+        android:id="@+id/text_gchat_date"
+        style="@style/chat_date"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/card_gchat_message_incom"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintWidth_max="wrap"
+        app:layout_constraintWidth_percent="0.9"
+        android:background="@drawable/shape_bg_incoming_msg"
+        android:paddingLeft="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_gchat_date">
+
+        <LinearLayout
+            android:id="@+id/layout_gchat_container_incom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="18sp"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/image_gchat_message"
+                android:background="@drawable/image_outline"
+                android:outlineProvider="background"
+                android:layout_margin="2dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/text_gchat_message"
+                style="@style/chat_text"/>
+
+            <TableLayout
+                android:id="@+id/table_gchat_message"
+                style="@style/params_table"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/text_gchat_timestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="8:00"
+        android:textColor="@color/colorTextLight"
+        android:textSize="12sp"
+        android:paddingEnd="4dp"
+        app:layout_constraintBottom_toBottomOf="@+id/card_gchat_message_incom"
+        app:layout_constraintEnd_toEndOf="@+id/card_gchat_message_incom" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

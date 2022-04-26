@@ -23,16 +23,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,6 +42,7 @@ import static com.sggdev.wcwebcameracontrol.BabaikaConfigNotif.BabaikaConfigItem
 import static com.sggdev.wcwebcameracontrol.BabaikaConfigNotif.BabaikaConfigItem.CFG_OPT_READONLY;
 import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_DEVICE;
 import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_HOST;
+import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_SSID;
 import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_USER;
 import static com.sggdev.wcwebcameracontrol.BluetoothService.ACTION_DATA_AVAILABLE;
 import static com.sggdev.wcwebcameracontrol.DeviceItem.DEFAULT_DEVICE_COLOR;
@@ -61,15 +58,9 @@ public class DeviceConfigActivity extends Activity {
 
     private WCApp myApp;
 
-    private ImageView mDevice;
-    private ImageView mDeviceId;
-    private ImageView mConnectionState;
     private String mDeviceName;
     private String mDeviceHostName;
     private String mDeviceAddress;
-    private String mDeviceWriteChar = "";
-    private int mDeviceColor;
-    private int mDeviceIndex;
     private ListView mConfigList;
     private BluetoothService mBluetoothLeService;
     private ArrayList<BabaikaItem>  mGattCharacteristics =
@@ -161,7 +152,7 @@ public class DeviceConfigActivity extends Activity {
                             bnoti.setConnected(false);
                             for (BluetoothGattCharacteristic characteristic : mBluetoothLeService.getNotifyCharacteristics()) {
                                 if (characteristic.getUuid().toString().equals(uuid)) {
-                                    sendNotfySetting(characteristic, true);
+                                    sendNotifySetting(characteristic, true);
                                 }
                             }
                             break;
@@ -200,7 +191,7 @@ public class DeviceConfigActivity extends Activity {
         mConfigList.setAdapter((ListAdapter) null);
     }
 
-    private void sendNotfySetting(BluetoothGattCharacteristic characteristic, boolean notifyEnable) {
+    private void sendNotifySetting(BluetoothGattCharacteristic characteristic, boolean notifyEnable) {
         if (mBluetoothLeService.setCharacteristicNotification(
                 characteristic, notifyEnable)) {
             BluetoothGattDescriptor clientConfig = characteristic.getDescriptor(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG);
@@ -215,13 +206,7 @@ public class DeviceConfigActivity extends Activity {
         }
     }
 
-    private final List<DeviceIconID> colorList = new ArrayList<>();
-    private final List<DeviceIconID> indexList = new ArrayList<>();
-
-    private ColorIndexAdapter mColorAdapter;
-    private ColorIndexAdapter mIndexAdapter;
-
-    private LinearLayout mColorIndexChoosePanel;
+    private DeviceIconView mDeviceIcon;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -236,64 +221,14 @@ public class DeviceConfigActivity extends Activity {
         mDeviceHostName = "";
         mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_BLE_NAME);
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
-        mDeviceWriteChar = intent.getStringExtra(EXTRAS_DEVICE_WRITE_ID);
-        mDeviceColor = intent.getIntExtra(EXTRAS_DEVICE_COLOR, DEFAULT_DEVICE_COLOR);
-        mDeviceIndex = intent.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
+        String mDeviceWriteChar = intent.getStringExtra(EXTRAS_DEVICE_WRITE_ID);
+        int mDeviceColor = intent.getIntExtra(EXTRAS_DEVICE_COLOR, DEFAULT_DEVICE_COLOR);
+        int mDeviceIndex = intent.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
 
-        //mColorIndexChoosePanel = findViewById(R.id.color_index_choose);
-        RecyclerView ch_Color = findViewById(R.id.ch_color);
-        RecyclerView ch_Index = findViewById(R.id.ch_index);
-        mDevice = findViewById(R.id.icon_device);
-        mDeviceId = findViewById(R.id.icon_device_id);
-        mConnectionState = findViewById(R.id.icon_connection);
         mConfigList = findViewById(R.id.gatt_services_list);
 
-        mColorIndexChoosePanel = (LinearLayout) ch_Color.getParent();
-        mColorIndexChoosePanel.setVisibility(View.GONE);
-
-        mIndexAdapter = new ColorIndexAdapter(indexList, mDeviceColor, mDeviceIndex);
-        mColorAdapter = new ColorIndexAdapter(colorList, mDeviceColor, mDeviceIndex);
-
-        LinearLayoutManager mLayoutManager1 = new LinearLayoutManager(getApplicationContext());
-        mLayoutManager1.setOrientation(LinearLayoutManager.HORIZONTAL);
-        LinearLayoutManager mLayoutManager2 = new LinearLayoutManager(getApplicationContext());
-        mLayoutManager2.setOrientation(LinearLayoutManager.HORIZONTAL);
-        ch_Index.setLayoutManager(mLayoutManager1);
-        ch_Color.setLayoutManager(mLayoutManager2);
-        ch_Color.setItemAnimator(new DefaultItemAnimator());
-        ch_Index.setItemAnimator(new DefaultItemAnimator());
-        ch_Index.setAdapter(mIndexAdapter);
-        ch_Color.setAdapter(mColorAdapter);
-
-        updateColorList();
-        updateIndexList();
-
-        mColorAdapter.setOnItemChangedListener(position -> {
-            if (mDeviceColor != mColorAdapter.getSelectedColor()) {
-                mDeviceColor = mColorAdapter.getSelectedColor();
-                updateIndexList();
-            }
-        });
-
-        mIndexAdapter.setOnItemChangedListener(position -> {
-            if (mDeviceIndex != mIndexAdapter.getSelectedIndex()) {
-                mDeviceIndex = mIndexAdapter.getSelectedIndex();
-                updateColorList();
-            }
-        });
-
-
-        // Sets up UI references.
-        mConnectionState.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.disconnected));
-
-        mDeviceId.setOnClickListener(v -> {
-            if (mColorIndexChoosePanel.getVisibility() == View.VISIBLE) {
-                mColorIndexChoosePanel.setVisibility(View.GONE);
-            } else
-                mColorIndexChoosePanel.setVisibility(View.VISIBLE);
-        });
-
-        updateDeviceInfo();
+        mDeviceIcon = findViewById(R.id.device_icon_view);
+        mDeviceIcon.setDeviceConfig(mDeviceColor, mDeviceIndex, mDeviceWriteChar);
 
         Intent gattServiceIntent = new Intent(this, BluetoothService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
@@ -330,7 +265,7 @@ public class DeviceConfigActivity extends Activity {
                                     bnoti.setWaiting(false);
                                     for (BluetoothGattCharacteristic characteristic : mBluetoothLeService.getNotifyCharacteristics()) {
                                         if (characteristic.getUuid().toString().equals(bnoti.getUUID())) {
-                                            sendNotfySetting(characteristic, true);
+                                            sendNotifySetting(characteristic, true);
                                         }
                                     }
                                 } else
@@ -395,6 +330,20 @@ public class DeviceConfigActivity extends Activity {
                     if (it.Key().equals(KEY_HOST))
                         btn.setOnClickListener(view1 -> et.setText(myApp.getHttpCfgServerUrl()));
                     builder.setView(cView);
+                } else
+                if (it.Key().equals(KEY_SSID)) {
+                    View cView = LayoutInflater.from(DeviceConfigActivity.this)
+                            .inflate(R.layout.edit_request_with_set_def_choose, null);
+
+                    Button btn = cView.findViewById(R.id.set_default_button);
+                    final EditText et = cView.findViewById(R.id.editText);
+                    an_input = et;
+                    btn.setOnClickListener(view1 -> et.setText(myApp.getCurrentSsid()));
+                    btn = cView.findViewById(R.id.choose_button);
+                    btn.setOnClickListener(view1 -> {
+                        // todo : create alertdialog to choose wifi net
+                    });
+                    builder.setView(cView);
                 } else {
                     an_input = new EditText(DeviceConfigActivity.this);
                     builder.setView(an_input);
@@ -438,43 +387,8 @@ public class DeviceConfigActivity extends Activity {
         });
     }
 
-    private static final int[] stat_Colors = {
-            0xffaaaaaa, 0xff00ffff, 0xffff00ff, 0xffffff00,
-            0xffff5555, 0xff55ff55, 0xff5555ff, 0xffffffff};
-
-    void updateColorList() {
-        colorList.clear();
-        for (int stat_color : stat_Colors) {
-            DeviceIconID ble_i = new DeviceIconID(stat_color, mDeviceIndex);
-            colorList.add(ble_i);
-        }
-        mColorAdapter.setSelColorDigit(mDeviceColor, mDeviceIndex);
-        mColorAdapter.notifyDataSetChanged();
-        updateDeviceInfo();
-    }
-
-    void updateIndexList() {
-        indexList.clear();
-        for (int i = 0; i < 10; i++) {
-            DeviceIconID ble_i = new DeviceIconID(mDeviceColor, i);
-            indexList.add(ble_i);
-        }
-        mIndexAdapter.setSelColorDigit(mDeviceColor, mDeviceIndex);
-        mIndexAdapter.notifyDataSetChanged();
-        updateDeviceInfo();
-    }
-
-    private void updateDeviceInfo() {
-        String picName = SampleGattAttributes.getCharPicture(mDeviceWriteChar);
-        int resID = DeviceItem.defineDevicePictureID(getApplicationContext(), picName);
-        mDevice.setImageDrawable(ContextCompat.getDrawable(this, resID));
-
-        mDeviceId.setImageDrawable(new DeviceIconID(mDeviceColor, mDeviceIndex));
-    }
-
     void setDeviceWriteChar(String achar) {
-        mDeviceWriteChar = achar;
-        updateDeviceInfo();
+        mDeviceIcon.setDeviceWriteChar(achar);
     }
 
     private Handler mHandler;
@@ -498,7 +412,7 @@ public class DeviceConfigActivity extends Activity {
 
     private void disconnectAllNotifications() {
         for (BluetoothGattCharacteristic characteristic: mBluetoothLeService.getNotifyCharacteristics()) {
-            sendNotfySetting(characteristic, false);
+            sendNotifySetting(characteristic, false);
         }
     }
 
@@ -530,9 +444,9 @@ public class DeviceConfigActivity extends Activity {
         Intent intent = new Intent();
         intent.putExtra(EXTRAS_DEVICE_BLE_NAME, mDeviceName);
         intent.putExtra(EXTRAS_DEVICE_ADDRESS, mDeviceAddress);
-        intent.putExtra(EXTRAS_DEVICE_WRITE_ID, mDeviceWriteChar);
-        intent.putExtra(EXTRAS_DEVICE_COLOR, mDeviceColor);
-        intent.putExtra(EXTRAS_DEVICE_INDEX, mDeviceIndex);
+        intent.putExtra(EXTRAS_DEVICE_WRITE_ID, mDeviceIcon.getDeviceWriteChar());
+        intent.putExtra(EXTRAS_DEVICE_COLOR, mDeviceIcon.getDeviceColor());
+        intent.putExtra(EXTRAS_DEVICE_INDEX, mDeviceIcon.getDeviceIndex());
         intent.putExtra(EXTRAS_DEVICE_HOST_NAME, mDeviceHostName);
 
         setResult(RESULT_OK, intent);
@@ -548,7 +462,7 @@ public class DeviceConfigActivity extends Activity {
     }
 
     private void updateConnectionState(final int resourceId) {
-        runOnUiThread(() -> mConnectionState.setImageDrawable(ContextCompat.getDrawable(DeviceConfigActivity.this, resourceId)));
+        runOnUiThread(() -> mDeviceIcon.updateConnectionState(resourceId));
     }
 
     private void displayData(String charid, byte[] data) {
@@ -625,7 +539,7 @@ public class DeviceConfigActivity extends Activity {
                         final int charaPerm = gattCharacteristic.getPermissions();
                         if ((charaProp & BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
                             mGattCharacteristics.add(notification);
-                            sendNotfySetting(gattCharacteristic, true);
+                            sendNotifySetting(gattCharacteristic, true);
 
                             if (((charaProp & BluetoothGattCharacteristic.PROPERTY_READ) > 0) ||
                                     ((charaPerm & BluetoothGattCharacteristic.PERMISSION_READ) > 0)) {

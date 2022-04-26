@@ -47,12 +47,13 @@ public class SampleGattAttributes {
         Class<? extends BabaikaBLEDevice> cl = device_classes.get(uuid);
         if (cl != null) {
             try {
-                Constructor[] ctors = cl.getDeclaredConstructors();
-                Constructor ctor = null;
-                for (Constructor constructor : ctors) {
-                    ctor = constructor;
-                    if (ctor.getGenericParameterTypes().length == 0)
+                Constructor<?>[] ctors = cl.getDeclaredConstructors();
+                Constructor<?> ctor = null;
+                for (Constructor<?> constructor : ctors) {
+                    if (constructor.getGenericParameterTypes().length == 0) {
+                        ctor = constructor;
                         break;
+                    }
                 }
                 if (ctor != null) {
                     ctor.setAccessible(true);
@@ -75,12 +76,13 @@ public class SampleGattAttributes {
             if (cl == null) cl = read_attributes.get(chid);
             if (cl != null) {
                 try {
-                    Constructor[] ctors = cl.getDeclaredConstructors();
-                    Constructor ctor = null;
-                    for (Constructor constructor : ctors) {
-                        ctor = constructor;
-                        if (ctor.getGenericParameterTypes().length == 0)
+                    Constructor<?>[] ctors = cl.getDeclaredConstructors();
+                    Constructor<?> ctor = null;
+                    for (Constructor<?> constructor : ctors) {
+                        if (constructor.getGenericParameterTypes().length == 0) {
+                            ctor = constructor;
                             break;
+                        }
                     }
                     if (ctor != null) {
                         ctor.setAccessible(true);
@@ -103,12 +105,13 @@ public class SampleGattAttributes {
             Class<? extends BabaikaBLEDevice> cl = write_attributes.get(chid);
             if (cl != null) {
                 try {
-                    Constructor[] ctors = cl.getDeclaredConstructors();
-                    Constructor ctor = null;
-                    for (Constructor constructor : ctors) {
-                        ctor = constructor;
-                        if (ctor.getGenericParameterTypes().length == 0)
+                    Constructor<?>[] ctors = cl.getDeclaredConstructors();
+                    Constructor<?> ctor = null;
+                    for (Constructor<?> constructor : ctors) {
+                        if (constructor.getGenericParameterTypes().length == 0) {
+                            ctor = constructor;
                             break;
+                        }
                     }
                     if (ctor != null) {
                         ctor.setAccessible(true);
@@ -131,12 +134,13 @@ public class SampleGattAttributes {
             Class<? extends BabaikaBLEDevice> cl = read_attributes.get(chid);
             if (cl != null) {
                 try {
-                    Constructor[] ctors = cl.getDeclaredConstructors();
-                    Constructor ctor = null;
-                    for (Constructor constructor : ctors) {
-                        ctor = constructor;
-                        if (ctor.getGenericParameterTypes().length == 0)
+                    Constructor<?>[] ctors = cl.getDeclaredConstructors();
+                    Constructor<?> ctor = null;
+                    for (Constructor<?> constructor : ctors) {
+                        if (constructor.getGenericParameterTypes().length == 0) {
+                            ctor = constructor;
                             break;
+                        }
                     }
                     if (ctor != null) {
                         ctor.setAccessible(true);

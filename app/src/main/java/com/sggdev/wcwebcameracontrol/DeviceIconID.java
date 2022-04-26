@@ -11,13 +11,13 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
 public class DeviceIconID extends Drawable {
-    private Paint mPaint;
+    private final Paint mPaint;
 
-    private int mColor;
-    private int mDigit;
+    private final int mColor;
+    private final int mDigit;
 
-    private Path mPath;
-    private Path mPathGlance;
+    private final Path mPath;
+    private final Path mPathGlance;
 
     private float mX;
     private float mY;

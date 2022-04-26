@@ -1,5 +1,7 @@
 package com.sggdev.wcwebcameracontrol;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -84,6 +86,7 @@ public class BabaikaNotification extends BabaikaItem {
         }
     }
 
+    @NonNull
     public String toString() {
         return formatted_value;
     }

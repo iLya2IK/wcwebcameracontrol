@@ -1,10 +1,12 @@
 package com.sggdev.wcwebcameracontrol;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class BabaikaItem {
-    private static String BLE_STATE_DEVICE_PICTURE = "picture";
+    private static final String BLE_STATE_DEVICE_PICTURE = "picture";
 
     private String picture;
 
@@ -40,6 +42,7 @@ public class BabaikaItem {
 
     protected void setPicture(String avalue) {picture = avalue; }
 
+    @NonNull
     public String toString() {
         return "";
     }

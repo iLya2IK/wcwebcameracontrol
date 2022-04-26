@@ -3,11 +3,18 @@
     <color name="colorPrimary">#3e3e3e</color>
     <color name="colorPrimaryDark">#3e3e3e</color>
     <color name="colorAccent">#c0e0e0</color>
+    <color name="colorTextLight">#c0c0c0</color>
     <color name="colorText">#dedede</color>
     <color name="red">#de5555</color>
     <color name="colorTextSecondary">#aaaaaa</color>
+    <color name="colorValueString">#99ec99</color>
+    <color name="colorValueInt">#aaaaff</color>
+    <color name="colorValueFloat">#99ccff</color>
+    <color name="colorValueBool">#ed88aa</color>
     <color name="buttonColor">#5f5f5f</color>
+    <color name="buttonColorAlpha50">#7f5f5f5f</color>
 
     <color name="incomingMsgBg">#5f5f5f</color>
     <color name="outgoingMsgBg">#4f4f6f</color>
+    <color name="black_overlay">#66000000</color>
 </resources>

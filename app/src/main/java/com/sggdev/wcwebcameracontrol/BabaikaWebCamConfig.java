@@ -9,6 +9,8 @@ public class BabaikaWebCamConfig extends BabaikaConfigNotif {
     final static String KEY_PASS = "p";
     final static String KEY_HOST = "h";
     final static String KEY_DEVICE = "d";
+    final static String KEY_SSID = "s";
+    final static String KEY_SSID_PASS = "k";
 
     BabaikaWebCamConfig() {
         this("");
@@ -16,11 +18,14 @@ public class BabaikaWebCamConfig extends BabaikaConfigNotif {
 
     BabaikaWebCamConfig(String chuuid) {
         super(chuuid);
-        addField(KEY_USER, "dev_cfg_username", "username_title", "");
+        addField(KEY_USER, "ic_user", "username_title", "");
         BabaikaConfigItem it = addField(KEY_PASS, "dev_cfg_password", "password_title", "***");
         it.setOption(CFG_OPT_PASSWORD);
-        addField(KEY_HOST, "dev_cfg_host", "hostname_title", "https://");
-        it = addField(KEY_DEVICE, "dev_cfg_device_name", "device_name_title", "");
+        addField(KEY_HOST, "ic_host", "hostname_title", "https://");
+        it = addField(KEY_DEVICE, "ic_default_device", "device_name_title", "");
         it.setOption(CFG_OPT_READONLY);
+        it = addField(KEY_SSID, "ic_cfg_wifi_ssid", "ssid_title", "");
+        it = addField(KEY_SSID_PASS, "dev_cfg_password", "ssid_password_title", "***");
+        it.setOption(CFG_OPT_PASSWORD);
     }
 }

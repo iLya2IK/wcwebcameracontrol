@@ -6,7 +6,10 @@ public class IntentConsts {
     public static final String EXTRAS_DEVICE_ADDRESS =   "DEVICE_ADDRESS";
     public static final String EXTRAS_DEVICE_COLOR =     "DEVICE_COLOR";
     public static final String EXTRAS_DEVICE_INDEX =     "DEVICE_INDEX";
+    public static final String EXTRAS_DEVICE_LST_SYNC =  "DEVICE_LST_SYNC";
     public static final String EXTRAS_DEVICE_WRITE_ID =  "EXTRAS_DEVICE_WRITE_ID";
     public static final String EXTRAS_USER_DEVICE_ID =   "EXTRAS_USER_DEVICE_ID";
     public static final String EXTRAS_TARGET_DEVICE_ID = "EXTRAS_TARGET_DEVICE_ID";
+    public static final String ACT_FULL_SCREEN_IMAGE_VIEW = "FULL_SCREEN_IMAGE_VIEW";
+    public static final String EXTRAS_IMAGE_BITMAP = "EXTRAS_IMAGE_BITMAP";
 }

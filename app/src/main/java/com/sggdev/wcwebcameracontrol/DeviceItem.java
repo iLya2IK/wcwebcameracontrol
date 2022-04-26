@@ -6,8 +6,6 @@ import android.content.Context;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.sql.Timestamp;
-
 public class DeviceItem implements Comparable<DeviceItem> {
     public static final int DEFAULT_DEVICE_COLOR = 0xffaaaaaa;
 
@@ -19,8 +17,9 @@ public class DeviceItem implements Comparable<DeviceItem> {
     public static final String DEVICE_ITEM_COLOR = "color";
     public static final String DEVICE_ITEM_INDEX = "ind";
     public static final String DEVICE_ITEM_TIME_STAMP = "timestamp";
+    public static final String DEVICE_ITEM_UNREAD_MSGS = "unread";
 
-    private Context mContext;
+    private final Context mContext;
     private BluetoothDevice device = null;
     private boolean mIsBLEConnected = false;
     private boolean mIsOnline = false;
@@ -34,6 +33,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
     private int mDeviceIndex = 0;
     private long mDBID = -1;
     private String mLastSync = "";
+    private int mUnReadedMsgs = 0;
 
     DeviceItem(Context aContext) {
         mContext = aContext;
@@ -54,6 +54,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
                 (mDevicePicture.equals(it.mDevicePicture))&&
                 (mDevicePictureID == it.mDevicePictureID)&&
                 (mDeviceWriteChar.equals(it.mDeviceWriteChar))&&
+                (mUnReadedMsgs == it.mUnReadedMsgs)&&
                 (mIsOnline == it.mIsOnline));
     }
 
@@ -81,6 +82,12 @@ public class DeviceItem implements Comparable<DeviceItem> {
         updateSecondaryValues();
     }
 
+    void complete(String deviceServerName) {
+        if (deviceServerName.length() > 0)
+            mServerName = deviceServerName;
+        updateSecondaryValues();
+    }
+
     boolean tryToCompleteFrom(DeviceItem an_device,
                                String deviceServerName,
                                String deviceBLEName,
@@ -99,6 +106,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
                 mDeviceColor = an_device.mDeviceColor;
                 mDeviceIndex = an_device.mDeviceIndex;
                 mLastSync = an_device.mLastSync;
+                mUnReadedMsgs = an_device.mUnReadedMsgs;
                 device = an_device.device;
                 mIsOnline = an_device.isOnline();
                 if (deviceServerName.length() == 0)
@@ -125,6 +133,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
             cached_item.put(DEVICE_ITEM_COLOR, mDeviceColor);
             cached_item.put(DEVICE_ITEM_INDEX, mDeviceIndex);
             cached_item.put(DEVICE_ITEM_TIME_STAMP, mLastSync);
+            cached_item.put(DEVICE_ITEM_UNREAD_MSGS, mUnReadedMsgs);
             return cached_item.toString();
         } catch (JSONException e) {
             e.printStackTrace();
@@ -151,6 +160,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
             mDeviceIndex = cached_item.getInt(DEVICE_ITEM_INDEX);
             mDeviceColor = cached_item.getInt(DEVICE_ITEM_COLOR);
             mLastSync = cached_item.getString(DEVICE_ITEM_TIME_STAMP);
+            mUnReadedMsgs = cached_item.getInt(DEVICE_ITEM_UNREAD_MSGS);
 
             updateSecondaryValues();
         } catch (JSONException e) {
@@ -172,7 +182,8 @@ public class DeviceItem implements Comparable<DeviceItem> {
 
     void updateSecondaryValues() {
         mDevicePicture = SampleGattAttributes.getCharPicture(mDeviceWriteChar);
-        mDevicePictureID = defineDevicePictureID(mContext, mDevicePicture);
+        if (mContext != null)
+            mDevicePictureID = defineDevicePictureID(mContext, mDevicePicture);
     }
 
     void setProps(int aColor, int aIndex) {
@@ -180,18 +191,22 @@ public class DeviceItem implements Comparable<DeviceItem> {
         mDeviceIndex = aIndex;
     }
 
+    void setSyncProps(String aLstSync, int aCnt) {
+        mLastSync = aLstSync;
+        mUnReadedMsgs = aCnt;
+    }
+
     static int defineDevicePictureID(Context aContext, String aPicName) {
         int resID;
         if (aPicName != null) {
             resID = aContext.getResources().getIdentifier(aPicName, "drawable", aContext.getPackageName());
             if (resID == 0) {
-                resID = R.drawable.ic_ble_device;
+                resID = R.drawable.ic_default_device;
             }
-        } else resID = R.drawable.ic_ble_device;
+        } else resID = R.drawable.ic_default_device;
         return resID;
     }
 
-    BluetoothDevice getDevice() {return device;}
     String getDeviceBLEAddress() {return bleAddress;}
     String getDeviceServerName() {return mServerName;}
     String getDeviceWriteChar() {return mDeviceWriteChar;}
@@ -211,6 +226,9 @@ public class DeviceItem implements Comparable<DeviceItem> {
     void setBLEDevice(BluetoothDevice dev) {device = dev;}
     void setDbId(long dbId) { mDBID = dbId; }
     void setLstSync(String aLstSync) { mLastSync = aLstSync; }
+
+    int getUnreadedMsgs() { return mUnReadedMsgs; }
+    void setUnreadedMsgs(int amount) { mUnReadedMsgs = amount; }
 
     @Override
     public int compareTo(DeviceItem o) {
