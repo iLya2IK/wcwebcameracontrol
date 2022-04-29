@@ -91,15 +91,19 @@ public class DeviceChatActivity extends Activity {
     private TableLayout mOutParamsTable;
     private ImageButton mScroolDown;
 
+    private LinearLayoutManager llm;
+
     private DeviceItem mTargetDevice;
     private DeviceItem mUserDevice;
 
     private Timer syntimer;
     private SynchroTask syntask;
     private IdleTask idletask;
+    private RollTask rolltask;
 
     private final BlockingQueue<WCChat.ChatMedia> mediaBlockingQueue = new LinkedBlockingQueue<>();
     private final HashMap<Integer, WCChat.ChatMedia> mMediaTable = new LinkedHashMap<>();
+    private final WCRollingRIDCache mMediaCache = new WCRollingRIDCache();
     private static final Object SyncMediaTaskObj = new Object();
     private int mediaLoaderTasks = 0;
 
@@ -260,7 +264,7 @@ public class DeviceChatActivity extends Activity {
                         100);
             }
         });
-        final LinearLayoutManager llm = (LinearLayoutManager) mMessageRecycler.getLayoutManager();
+        llm = (LinearLayoutManager) mMessageRecycler.getLayoutManager();
 
         mDeviceIcon = findViewById(R.id.device_icon_view);
         mDeviceIcon.setDeviceConfig(mDeviceColor, mDeviceIndex, mDeviceWriteChar);
@@ -300,30 +304,32 @@ public class DeviceChatActivity extends Activity {
 
                 if (hasEnded) {
                     mScroolDown.clearAnimation();
-                    int visiblePosition = llm.findLastCompletelyVisibleItemPosition();
-                    if (visiblePosition < (mMessageList.size() - 1)) {
-                        mScroolDown.setVisibility(View.VISIBLE);
-                        mScroolDown.animate()
-                                .alpha(1.0f)
-                                .setDuration(300)
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        mScroolDown.setAlpha(1.0f);
-                                    }
-                                });
-                    } else {
-                        mScroolDown.animate()
-                                .alpha(0.0f)
-                                .setDuration(300)
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        mScroolDown.setVisibility(View.GONE);
-                                    }
-                                });
+                    if (llm != null) {
+                        int visiblePosition = llm.findLastCompletelyVisibleItemPosition();
+                        if (visiblePosition < (mMessageList.size() - 1)) {
+                            mScroolDown.setVisibility(View.VISIBLE);
+                            mScroolDown.animate()
+                                    .alpha(1.0f)
+                                    .setDuration(300)
+                                    .setListener(new AnimatorListenerAdapter() {
+                                        @Override
+                                        public void onAnimationEnd(Animator animation) {
+                                            super.onAnimationEnd(animation);
+                                            mScroolDown.setAlpha(1.0f);
+                                        }
+                                    });
+                        } else {
+                            mScroolDown.animate()
+                                    .alpha(0.0f)
+                                    .setDuration(300)
+                                    .setListener(new AnimatorListenerAdapter() {
+                                        @Override
+                                        public void onAnimationEnd(Animator animation) {
+                                            super.onAnimationEnd(animation);
+                                            mScroolDown.setVisibility(View.GONE);
+                                        }
+                                    });
+                        }
                     }
                 }
             }
@@ -336,10 +342,12 @@ public class DeviceChatActivity extends Activity {
                 sDate.setVisibility(View.VISIBLE);
                 sDate.setAlpha(1.0f);
 
-                int visiblePosition = llm.findFirstVisibleItemPosition();
-                if (visiblePosition >= 0) {
-                    WCChat.ChatMessage message = mMessageList.get(visiblePosition);
-                    sDate.setText(message.getDate());
+                if (llm != null) {
+                    int visiblePosition = llm.findFirstVisibleItemPosition();
+                    if (visiblePosition >= 0) {
+                        WCChat.ChatMessage message = mMessageList.get(visiblePosition);
+                        sDate.setText(message.getDate());
+                    }
                 }
             }
         });
@@ -527,6 +535,7 @@ public class DeviceChatActivity extends Activity {
     }
 
     void restartIdleTimer() {
+        rolltask = new RollTask(this);
         syntask  = new SynchroTask(this);
         idletask = new IdleTask(this);
         syntimer = new Timer();
@@ -536,6 +545,7 @@ public class DeviceChatActivity extends Activity {
         //This will be called after onCreate or your activity is resumed
         if (syntimer == null) {
             restartIdleTimer();
+            syntimer.schedule(rolltask, 500, 500);
             syntimer.schedule(syntask, 500, 5000);
             syntimer.schedule(idletask, 10000, 10000);
         }
@@ -546,6 +556,8 @@ public class DeviceChatActivity extends Activity {
             syntask.cancel();
         if (idletask != null)
             idletask.cancel();
+        if (rolltask != null)
+            rolltask.cancel();
         if (syntimer != null) {
             syntimer.cancel();
             syntimer.purge();
@@ -554,6 +566,7 @@ public class DeviceChatActivity extends Activity {
         syntimer = null;
         syntask = null;
         idletask = null;
+        rolltask = null;
     }
 
     private static class SynchroTask extends TimerJob {
@@ -570,6 +583,14 @@ public class DeviceChatActivity extends Activity {
         IdleTask(Activity activity) {
             super(activity);
             setOnJobExecute(() -> ((DeviceChatActivity) getActivity()).doIdle());
+        }
+    }
+
+    private static class RollTask extends TimerJob {
+
+        RollTask(Activity activity) {
+            super(activity);
+            setOnJobExecute(() -> ((DeviceChatActivity) getActivity()).doRoll());
         }
     }
 
@@ -631,6 +652,17 @@ public class DeviceChatActivity extends Activity {
     private void doIdle() {
         WCHTTPResync.Builder sync = new WCHTTPResync.Builder(this, null);
         sync.addNotifyListener().excludeDevice(mTargetDevice.getDeviceServerName()).doResync();
+    }
+
+    private void doRoll() {
+        int cnt = 0;
+        for (WCRollingRID rid : mMediaCache) {
+            if (rid.needToLoad()) {
+                rid.load();
+                cnt++;
+                if (cnt > 1) break;
+            }
+        }
     }
 
     private void loadMessageList() {
@@ -1008,6 +1040,25 @@ public class DeviceChatActivity extends Activity {
                 paramsTable = itemView.findViewById(R.id.table_gchat_message);
             }
 
+            class OnMediaLoaded implements WCRollingRID.OnLoadingFinished {
+
+                @Override
+                public void finished(WCRollingRID obj) {
+                    DeviceChatActivity.this.runOnUiThread(() -> {
+                        if (llm != null) {
+                            int firstVisiblePosition = llm.findFirstVisibleItemPosition() - 16;
+                            int lastVisiblePosition = llm.findLastVisibleItemPosition() + 16;
+                            if (firstVisiblePosition < 0) firstVisiblePosition = 0;
+                            if (lastVisiblePosition >= mMessageList.size()) lastVisiblePosition = mMessageList.size()-1;
+                            for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
+                                if (mMessageList.get(i).getRid() == obj.rid())
+                                    mMessageAdapter.notifyItemChanged(i);
+                            }
+                        }
+                    });
+                }
+            }
+
             void bind(WCChat.ChatMessage message, boolean showDate) {
 
                 if (showDate) {
@@ -1022,7 +1073,7 @@ public class DeviceChatActivity extends Activity {
                     media = mMediaTable.get(message.getRid());
                 }
 
-                Drawable drawing = null;
+                /*Drawable drawing = null;
                 if (media != null && media.isComplete())
                     drawing = Drawable.createFromPath(media.getLocation());
 
@@ -1089,6 +1140,49 @@ public class DeviceChatActivity extends Activity {
                     params.width = width;
                     params.height = height;
                     recImage.setLayoutParams(params);
+                }*/
+
+                boolean imgEmpty = true;
+
+                if (media != null && media.isComplete()) {
+                    long rid = media.getServerRID();
+                    WCRollingRID rollingRID = mMediaCache.findByRID(rid);
+                    if (rollingRID != null) {
+                        if (rollingRID.isLoaded()) {
+                            recImage.setImageDrawable(rollingRID.getBitmap());
+                            recImage.setClipToOutline(true);
+                            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) recImage.getLayoutParams();
+                            params.width = rollingRID.getWidth();
+                            params.height = rollingRID.getHeight();
+                            recImage.setLayoutParams(params);
+                            imgEmpty = false;
+                        }
+                    } else {
+                        String loadFrom = media.getLocation();
+                        WCRollingRID rollid = new WCRollingRID(DeviceChatActivity.this, rid, loadFrom);
+                        rollid.setFinishedListener(new OnMediaLoaded());
+                        try {
+                            mMediaCache.putFirst(rollid);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    final String imgLoc = media.getLocation();
+                    recImage.setOnClickListener(view -> {
+                        final Intent data = new Intent(DeviceChatActivity.this,
+                                ImageViewFullscreenActivity.class);
+
+                        data.putExtra(EXTRAS_IMAGE_BITMAP, imgLoc);
+                        startActivity(data);
+                    });
+                }
+
+                if (imgEmpty) {
+                    Drawable drawing = ContextCompat.getDrawable(getApplicationContext(),
+                            android.R.drawable.ic_menu_report_image);
+                    recImage.setImageDrawable(drawing);
+                    recImage.setClipToOutline(true);
+                    recImage.setOnClickListener(null);
                 }
 
                 String msg = message.getMessage();
