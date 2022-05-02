@@ -244,7 +244,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                     Cursor cursor = db.rawQuery(usersSelectQuery, whereArgs.toArray(new String[]{}));
                     try {
                         if (cursor.moveToFirst()) {
-                            deviceId = cursor.getInt(0);
+                            deviceId = cursor.getLong(0);
                             db.setTransactionSuccessful();
                         }
                     } finally {
@@ -259,7 +259,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                     Cursor cursor = db.rawQuery(usersSelectQuery, null);
                     try {
                         if (cursor.moveToFirst()) {
-                            deviceId = cursor.getInt(0);
+                            deviceId = cursor.getLong(0);
                             db.setTransactionSuccessful();
                         }
                     } finally {
@@ -301,7 +301,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 do {
                     try {
                         JSONObject cached_item = new JSONObject();
-                        cached_item.put(DEVICE_ITEM_DB_ID, cursor.getInt(cInt[0]));
+                        cached_item.put(DEVICE_ITEM_DB_ID, cursor.getLong(cInt[0]));
                         cached_item.put(DEVICE_ITEM_SERVER_NAME, cursor.getString(cInt[1]));
                         cached_item.put(DEVICE_ITEM_BLE_NAME, cursor.getString(cInt[2]));
                         cached_item.put(DEVICE_ITEM_BLE_ADDRESS, cursor.getString(cInt[3]));
@@ -406,10 +406,31 @@ public class ChatDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             ArrayList<String> whereArgs = new ArrayList<>();
-            whereArgs.add(Integer.toString(media.getDbId()));
+            whereArgs.add(Long.toString(media.getDbId()));
             ContentValues values = new ContentValues();
             values.put(KEY_MEDIA_PREVIEW, ablob);
-            String whereClause = KEY_MSG_ID + "=?";
+            String whereClause = KEY_MEDIA_ID + "=?";
+            db.update(TABLE_MEDIA, values, whereClause,
+                    whereArgs.toArray(new String[]{}));
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            Log.d(TAG, "Error while trying to update media record");
+            e.printStackTrace();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    void setMediaPreview(long rid, byte[] ablob) {
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        try {
+            ArrayList<String> whereArgs = new ArrayList<>();
+            whereArgs.add(Long.toString(rid));
+            ContentValues values = new ContentValues();
+            values.put(KEY_MEDIA_PREVIEW, ablob);
+            String whereClause = KEY_MEDIA_RID + "=?";
             db.update(TABLE_MEDIA, values, whereClause,
                     whereArgs.toArray(new String[]{}));
             db.setTransactionSuccessful();
@@ -425,7 +446,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
         SQLiteDatabase db = getReadableDatabase();
         String SELECT_QUERY = String.format("select %s from %s where %s == ?;",
                 TABLE_MEDIA, KEY_MEDIA_PREVIEW, KEY_MEDIA_ID);
-        Cursor cursor = db.rawQuery(SELECT_QUERY, new String[] {Integer.toString(media.getDbId())});
+        Cursor cursor = db.rawQuery(SELECT_QUERY, new String[] {Long.toString(media.getDbId())});
         try {
             if (cursor.moveToFirst()) {
                 media.setPreview(cursor.getBlob(0));
@@ -545,11 +566,11 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         cursor.getColumnIndex(KEY_MEDIA_DEVICE_ID_FK)
                 };
                 do {
-                    int recID = cursor.getInt(cInt[0]);
+                    long recID = cursor.getLong(cInt[0]);
                     String loc = cursor.getString(cInt[1]);
                     String meta = cursor.getString(cInt[2]);
                     byte[] preview = cursor.getBlob(cInt[3]);
-                    int rid = cursor.getInt(cInt[4]);
+                    long rid = cursor.getLong(cInt[4]);
                     int devId = cursor.getInt(cInt[5]);
 
                     WCChat.ChatMedia aMedia = new WCChat.ChatMedia(recID);
@@ -594,7 +615,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         cursor.getColumnIndex(KEY_MSG_STATE)
                 };
                 do {
-                    int msgID = cursor.getInt(cInt[0]);
+                    long msgID = cursor.getLong(cInt[0]);
                     String txt = cursor.getString(cInt[1]);
                     String stamp = cursor.getString(cInt[2]);
                     String msgTrgDevice = cursor.getString(cInt[3]);
@@ -639,7 +660,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         whereClause.append("?");
                     cnt++;
 
-                    whereArgs.add(Integer.toString(msg.getDbId()));
+                    whereArgs.add(Long.toString(msg.getDbId()));
                 }
             }
             if (cnt > 0) {
@@ -696,8 +717,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
         try {
             if (cursor.moveToFirst()) {
                 do {
-                    int msgID = cursor.getInt(0);
-                    int dbID = cursor.getInt(1);
+                    long msgID = cursor.getLong(0);
+                    long dbID = cursor.getLong(1);
                     String srcDeviceName = cursor.getString(2);
                     int state = cursor.getInt(3);
                     String msgTrgDevice = cursor.getString(4);
@@ -849,8 +870,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
         try {
             if (cursor.moveToFirst()) {
                 do {
-                    int msgID = cursor.getInt(0);
-                    int msgSrcDeviceId = cursor.getInt(1);
+                    long msgID = cursor.getLong(0);
+                    long msgSrcDeviceId = cursor.getLong(1);
                     int state = cursor.getInt(2);
                     String msgTrgDevice = cursor.getString(3);
                     String txt = cursor.getString(4);
@@ -921,8 +942,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
         try {
             if (cursor.moveToFirst()) {
                 do {
-                    int msgID = cursor.getInt(0);
-                    int msgSrcDeviceId = cursor.getInt(1);
+                    long msgID = cursor.getLong(0);
+                    long msgSrcDeviceId = cursor.getLong(1);
                     int state = cursor.getInt(2);
                     String msgTrgDevice = cursor.getString(3);
                     String txt = cursor.getString(4);

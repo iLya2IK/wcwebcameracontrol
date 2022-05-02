@@ -29,9 +29,9 @@ public class WCChat {
         private final static int MAX_RETRY_MEDIA_LOAD_COUNT = 5;
         private final ReentrantLock lock = new ReentrantLock();
 
-        private final int dbId;
+        private final long dbId;
         private long sender = -1;
-        private int rid = 0;
+        private long rid = 0;
         private String location = "";
         private String meta = "";
         private boolean loading = false;
@@ -39,7 +39,7 @@ public class WCChat {
         private byte[] blob;
         private int retry_cnt = 0;
 
-        ChatMedia(int aDbId) {
+        ChatMedia(long aDbId) {
             dbId = aDbId;
         }
 
@@ -68,9 +68,9 @@ public class WCChat {
             }
         }
         String getMetaData() { return meta; }
-        int getServerRID() { return rid; }
+        long getServerRID() { return rid; }
         long getSender() { return sender; }
-        int getDbId() { return dbId; }
+        long getDbId() { return dbId; }
         byte[] getPreview() {
             lock();
             try {
@@ -79,8 +79,12 @@ public class WCChat {
                 unlock();
             }
         }
+        boolean hasPreview() {
+            if (blob == null) return false;
+            return blob.length != 0;
+        }
 
-        void setServerRID(int arid) { rid = arid; }
+        void setServerRID(long arid) { rid = arid; }
         void setLocation(String aloc) {
             lock();
             try {
@@ -176,7 +180,7 @@ public class WCChat {
     }
 
     public static class ChatMessage {
-        private final int dbId;
+        private final long dbId;
         private String message = "";
         private DeviceItem sender = null;
         private int state = MSG_STATE_UNKNOWN;
@@ -189,7 +193,7 @@ public class WCChat {
         private JSONObject jsonObject = null;
         private JSONObject jsonParams = null;
 
-        ChatMessage(int aDbId) {
+        ChatMessage(long aDbId) {
             dbId = aDbId;
         }
 
@@ -197,7 +201,7 @@ public class WCChat {
         String getMessage() { return msg; }
         String getCreatedAt() { return createdAt; }
         DeviceItem getSender() { return sender; }
-        int getDbId() { return dbId; }
+        long getDbId() { return dbId; }
         String getTarget() { return target; }
         String getTimeStamp() { return createdAt; }
         String getTime() { return createdAtTime; }

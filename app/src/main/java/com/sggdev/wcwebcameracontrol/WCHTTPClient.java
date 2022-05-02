@@ -327,7 +327,7 @@ public class WCHTTPClient {
     }
 
     private WCRESTTask sendMsgsPrepare(Activity caller, DeviceItem aUser, int limit,
-                                      OnItemChangedListener onResult) {
+                                      OnIdChangedListener onResult) {
         if ((httpClientState != CS_CONNECTED) || httpClientSendingMsgs) return null;
 
         try {
@@ -383,14 +383,14 @@ public class WCHTTPClient {
     }
 
     public void sendMsgs(Activity caller, DeviceItem aUser, int limit,
-                                      OnItemChangedListener onResult) {
+                                      OnIdChangedListener onResult) {
         WCRESTTask wc_task = sendMsgsPrepare(caller, aUser, limit,
                 onResult);
         if (wc_task != null) wc_task.start();
     }
 
     public void sendMsgsSynchro(Activity caller, DeviceItem aUser, int limit,
-                         OnItemChangedListener onResult) {
+                         OnIdChangedListener onResult) {
         WCRESTTask wc_task = sendMsgsPrepare(caller, aUser, limit,
                 onResult);
         if (wc_task != null) wc_task.run();

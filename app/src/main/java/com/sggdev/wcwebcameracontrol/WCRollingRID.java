@@ -13,6 +13,8 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class WCRollingRID {
+    public final static int MIN_PIC_SIZE_DPI = 96;
+
     private final ReentrantLock lock = new ReentrantLock();
 
     public interface OnLoadingFinished {
@@ -24,15 +26,18 @@ public class WCRollingRID {
     private final String mLocation;
     private boolean mIsLoaded = false;
     private boolean mIsLoading = false;
+    private boolean mRefreshPreview;
+    private byte[] newPreview = null;
     private OnLoadingFinished onFinished = null;
     private BitmapDrawable mBitmap = null;
     private int mWidth = 0;
     private int mHeight = 0;
 
-    WCRollingRID(Context context, long aRid,  String aLoc) {
+    WCRollingRID(Context context, long aRid,  String aLoc, boolean refreshPreview) {
         mContext = context;
         mRid = aRid;
         mLocation = aLoc;
+        mRefreshPreview = refreshPreview;
     }
 
     public long rid() {return mRid;}
@@ -101,6 +106,16 @@ public class WCRollingRID {
         if (drawing == null)
             drawing = ContextCompat.getDrawable(mContext.getApplicationContext(),
                     android.R.drawable.ic_menu_report_image);
+        else {
+            if (mRefreshPreview) {
+                WCPicPreviewHelper previewHelper = new WCPicPreviewHelper();
+                previewHelper.save((BitmapDrawable) drawing);
+                newPreview = previewHelper.getBlob();
+                ChatDatabase db = ChatDatabase.getInstance(mContext);
+                db.setMediaPreview(rid(), newPreview);
+            }
+        }
+
 
         if (drawing != null) {
             Bitmap bitmap = ((BitmapDrawable) drawing).getBitmap();
@@ -117,7 +132,7 @@ public class WCRollingRID {
             //max image width = 90% of width - 30dp
             int max_bounding = (int) Math.round(displayMetrics.widthPixels * 0.9 -
                     30.0 * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-            int min_bounding = Math.round(96 * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+            int min_bounding = Math.round(MIN_PIC_SIZE_DPI * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
             int bounding;
 
             float xScale, yScale, scale;
@@ -158,6 +173,10 @@ public class WCRollingRID {
             unlock();
         }
     }
+
+    public boolean needRefreshPreview() { return mRefreshPreview; }
+
+    public byte[] getPreview() { return newPreview;}
 
     public void lock() {
         lock.lock();

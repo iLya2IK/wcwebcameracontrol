@@ -1,6 +1,5 @@
 package com.sggdev.wcwebcameracontrol;
 
-import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING;
 import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
 import static com.sggdev.wcwebcameracontrol.ChatDatabase.MEDIA_LOC;
 import static com.sggdev.wcwebcameracontrol.ChatDatabase.MSG_STATE_READY_TO_SEND;
@@ -17,15 +16,12 @@ import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_IMAGE_BITMAP;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.REST_RESULT_OK;
+import static com.sggdev.wcwebcameracontrol.WCRollingRID.MIN_PIC_SIZE_DPI;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -35,7 +31,6 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,21 +50,15 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.shape.CornerFamily;
-import com.google.android.material.shape.EdgeTreatment;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -89,7 +78,7 @@ public class DeviceChatActivity extends Activity {
     private List<WCChat.ChatMessage> mMessageList;
     private EditText mMsgToSend;
     private TableLayout mOutParamsTable;
-    private ImageButton mScroolDown;
+    private ImageButton mScrollDown;
 
     private LinearLayoutManager llm;
 
@@ -102,7 +91,7 @@ public class DeviceChatActivity extends Activity {
     private RollTask rolltask;
 
     private final BlockingQueue<WCChat.ChatMedia> mediaBlockingQueue = new LinkedBlockingQueue<>();
-    private final HashMap<Integer, WCChat.ChatMedia> mMediaTable = new LinkedHashMap<>();
+    private final HashMap<Long, WCChat.ChatMedia> mMediaTable = new LinkedHashMap<>();
     private final WCRollingRIDCache mMediaCache = new WCRollingRIDCache();
     private static final Object SyncMediaTaskObj = new Object();
     private int mediaLoaderTasks = 0;
@@ -217,7 +206,7 @@ public class DeviceChatActivity extends Activity {
 
     private void scrollDown() {
         mMessageRecycler.smoothScrollToPosition(mMessageList.size() - 1);
-        mScroolDown.setVisibility(View.GONE);
+        mScrollDown.setVisibility(View.GONE);
     }
 
     @Override
@@ -276,8 +265,8 @@ public class DeviceChatActivity extends Activity {
 
         final TextView sDate = findViewById(R.id.stamp_cur_date);
 
-        mScroolDown = findViewById(R.id.stamp_scroll_down);
-        mScroolDown.setOnClickListener(view -> {
+        mScrollDown = findViewById(R.id.stamp_scroll_down);
+        mScrollDown.setOnClickListener(view -> {
             scrollDown();
         });
 
@@ -303,30 +292,30 @@ public class DeviceChatActivity extends Activity {
                 }
 
                 if (hasEnded) {
-                    mScroolDown.clearAnimation();
+                    mScrollDown.clearAnimation();
                     if (llm != null) {
                         int visiblePosition = llm.findLastCompletelyVisibleItemPosition();
                         if (visiblePosition < (mMessageList.size() - 1)) {
-                            mScroolDown.setVisibility(View.VISIBLE);
-                            mScroolDown.animate()
+                            mScrollDown.setVisibility(View.VISIBLE);
+                            mScrollDown.animate()
                                     .alpha(1.0f)
                                     .setDuration(300)
                                     .setListener(new AnimatorListenerAdapter() {
                                         @Override
                                         public void onAnimationEnd(Animator animation) {
                                             super.onAnimationEnd(animation);
-                                            mScroolDown.setAlpha(1.0f);
+                                            mScrollDown.setAlpha(1.0f);
                                         }
                                     });
                         } else {
-                            mScroolDown.animate()
+                            mScrollDown.animate()
                                     .alpha(0.0f)
                                     .setDuration(300)
                                     .setListener(new AnimatorListenerAdapter() {
                                         @Override
                                         public void onAnimationEnd(Animator animation) {
                                             super.onAnimationEnd(animation);
-                                            mScroolDown.setVisibility(View.GONE);
+                                            mScrollDown.setVisibility(View.GONE);
                                         }
                                     });
                         }
@@ -692,7 +681,7 @@ public class DeviceChatActivity extends Activity {
 
     private void doCompleteMedia(WCChat.ChatMedia media) {
         media.setComplete();
-        final int rid = media.getServerRID();
+        final long rid = media.getServerRID();
         runOnUiThread(() -> {
             for (int i = mMessageList.size() - 1; i >= 0; i--) {
                 if (mMessageList.get(i).getRid() == rid)
@@ -1044,6 +1033,14 @@ public class DeviceChatActivity extends Activity {
 
                 @Override
                 public void finished(WCRollingRID obj) {
+                    if (obj.needRefreshPreview()) {
+                        synchronized (mMediaTable) {
+                           WCChat.ChatMedia media = mMediaTable.get(obj.rid());
+                           if (media != null) {
+                               media.setPreview(obj.getPreview());
+                           }
+                        }
+                    }
                     DeviceChatActivity.this.runOnUiThread(() -> {
                         if (llm != null) {
                             int firstVisiblePosition = llm.findFirstVisibleItemPosition() - 16;
@@ -1073,75 +1070,6 @@ public class DeviceChatActivity extends Activity {
                     media = mMediaTable.get(message.getRid());
                 }
 
-                /*Drawable drawing = null;
-                if (media != null && media.isComplete())
-                    drawing = Drawable.createFromPath(media.getLocation());
-
-                if (drawing == null)
-                    drawing = ContextCompat.getDrawable(getApplicationContext(),
-                            android.R.drawable.ic_menu_report_image);
-
-                if (drawing!= null) {
-                    Bitmap bitmap = ((BitmapDrawable) drawing).getBitmap();
-
-                    int width;
-                    try {
-                        width = bitmap.getWidth();
-                    } catch (NullPointerException e) {
-                        throw new NoSuchElementException("Can't find bitmap on given view/drawable");
-                    }
-
-                    int height = bitmap.getHeight();
-                    DisplayMetrics displayMetrics = getApplicationContext().getResources().getDisplayMetrics();
-                    //max image width = 90% of width - 30dp
-                    int max_bounding = (int) Math.round(displayMetrics.widthPixels * 0.9 -
-                            30.0 * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-                    //int max_bounding = Math.round(280 * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-                    int min_bounding = Math.round(96 * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-                    int bounding;
-
-                    float xScale, yScale, scale;
-                    if (width > max_bounding || height > max_bounding) {
-                        bounding = max_bounding;
-                    } else if (width < min_bounding || height < min_bounding) {
-                        bounding = min_bounding;
-                    } else {
-                        bounding = Math.max(width, height);
-                    }
-                    xScale = ((float) bounding) / width;
-                    yScale = ((float) bounding) / height;
-                    scale = Math.min(xScale, yScale);
-
-                    Matrix matrix = new Matrix();
-                    matrix.postScale(scale, scale);
-
-                    Bitmap scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
-                    width = scaledBitmap.getWidth();
-                    height = scaledBitmap.getHeight();
-                    BitmapDrawable result = new BitmapDrawable(getApplicationContext().getResources(), scaledBitmap);
-
-                    recImage.setImageDrawable(result);
-                    recImage.setClipToOutline(true);
-
-                    if (media != null) {
-                        final String imgLoc = media.getLocation();
-                        recImage.setOnClickListener(view -> {
-                            final Intent data = new Intent(DeviceChatActivity.this,
-                                    ImageViewFullscreenActivity.class);
-
-                            data.putExtra(EXTRAS_IMAGE_BITMAP, imgLoc);
-                            startActivity(data);
-                        });
-                    } else {
-                        recImage.setOnClickListener(null);
-                    }
-
-                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) recImage.getLayoutParams();
-                    params.width = width;
-                    params.height = height;
-                    recImage.setLayoutParams(params);
-                }*/
-
                 boolean imgEmpty = true;
 
                 if (media != null && media.isComplete()) {
@@ -1159,7 +1087,8 @@ public class DeviceChatActivity extends Activity {
                         }
                     } else {
                         String loadFrom = media.getLocation();
-                        WCRollingRID rollid = new WCRollingRID(DeviceChatActivity.this, rid, loadFrom);
+                        WCRollingRID rollid = new WCRollingRID(DeviceChatActivity.this,
+                                rid, loadFrom, !media.hasPreview());
                         rollid.setFinishedListener(new OnMediaLoaded());
                         try {
                             mMediaCache.putFirst(rollid);
@@ -1178,10 +1107,31 @@ public class DeviceChatActivity extends Activity {
                 }
 
                 if (imgEmpty) {
-                    Drawable drawing = ContextCompat.getDrawable(getApplicationContext(),
-                            android.R.drawable.ic_menu_report_image);
+                    Drawable drawing = null;
+                    int width = 2;
+                    int height = 2;
+                    if ((media != null) && media.hasPreview()) {
+                        WCPicPreviewHelper previewHelper = new WCPicPreviewHelper(media.getPreview());
+                        if (previewHelper.load()) {
+                            drawing = new BitmapDrawable(getApplicationContext().getResources(),
+                                                            previewHelper.getBitmap());
+                            height = previewHelper.getHeight();
+                            width = previewHelper.getWidth();
+                        }
+                    }
+                    if (drawing == null) {
+                        drawing = ContextCompat.getDrawable(getApplicationContext(),
+                                android.R.drawable.ic_menu_report_image);
+                        DisplayMetrics displayMetrics = getApplicationContext().getResources().getDisplayMetrics();
+                        width = Math.round(MIN_PIC_SIZE_DPI * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+                        height = width;
+                    }
                     recImage.setImageDrawable(drawing);
                     recImage.setClipToOutline(true);
+                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) recImage.getLayoutParams();
+                    params.width = width;
+                    params.height = height;
+                    recImage.setLayoutParams(params);
                     recImage.setOnClickListener(null);
                 }
 
