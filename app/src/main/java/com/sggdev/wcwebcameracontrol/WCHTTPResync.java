@@ -8,6 +8,7 @@ import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_USER_CFG_INCORRECT;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.REST_RESULT_OK;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -24,6 +25,7 @@ import android.graphics.drawable.VectorDrawable;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -32,6 +34,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.appcompat.view.ContextThemeWrapper;
+import androidx.core.app.AlarmManagerCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.work.Constraints;
@@ -112,7 +115,7 @@ public class WCHTTPResync {
 
     public static String resyncServiceLastStamp(Context context) {
         ChatDatabase db = ChatDatabase.getInstance(context);
-        return db.getLastMsgTimeStamp(((WCApp)context.getApplicationContext()).getHttpCfgUserName());
+        return db.getLastMsgTimeStamp(((WCApp)context.getApplicationContext()).getHttpCfgDevice());
     }
 
     public interface OnSyncFinished {
@@ -248,7 +251,7 @@ public class WCHTTPResync {
             WCChat.ChatMessage msg = aList.get(0);
             if (msg.hasMedia()) {
                 Log.d(TAG, "there is media incoming");
-                List<Integer> mediaId = new ArrayList<>();
+                List<Long> mediaId = new ArrayList<>();
                 mediaId.add(msg.getRid());
                 ChatDatabase db = ChatDatabase.getInstance(context);
                 final List<WCChat.ChatMedia> new_media = db.getMedia(mediaId);
@@ -436,7 +439,7 @@ public class WCHTTPResync {
                     final List<WCChat.DeviceMsgsCnt> aDevCntList = new ArrayList<>();
                     final List<WCChat.ChatMessage> aMessageList = new ArrayList<>();
                     final List<String> devices = new ArrayList<>();
-                    int total = db.getNewMessagesCount(myApp.getHttpCfgUserName(),
+                    int total = db.getNewMessagesCount(myApp.getHttpCfgDevice(),
                             mLastSync, aDevCntList);
                     if (total > 0) {
                         for (int id = aDevCntList.size() - 1; id >= 0; id--) {
@@ -456,7 +459,7 @@ public class WCHTTPResync {
                                 if (sync.onNewMessagesSummary(myApp, total, aDevCntList)) {
                                     if (messagesWaitToLoad) {
                                         messagesWaitToLoad = false;
-                                        if (db.checkNewMessages(myApp.getHttpCfgUserName(),
+                                        if (db.checkNewMessages(myApp.getHttpCfgDevice(),
                                                 mLastSync, aMessageList)) {
                                             for (int id = aMessageList.size() - 1; id >= 0; id--) {
                                                 WCChat.ChatMessage msg = aMessageList.get(id);

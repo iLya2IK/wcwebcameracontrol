@@ -13,6 +13,5 @@ public class WCBootBroadcastReceiver extends BroadcastReceiver {
         if (intent.getAction().equals(WC_BOOT_BROADCST)) {
             WCHTTPResync.restartWCHTTPBackgroundWork(context);
         }
-
     }
 }

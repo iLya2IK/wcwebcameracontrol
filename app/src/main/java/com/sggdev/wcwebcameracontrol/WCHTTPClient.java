@@ -219,13 +219,20 @@ public class WCHTTPClient {
                     if (res instanceof JSONArray)
                         for (int i = 0; i < ((JSONArray) res).length(); i++) {
                             Object aDevice = ((JSONArray) res).opt(i);
-                            if (aDevice instanceof String)
+                            if (aDevice instanceof String) {
                                 if (((String) aDevice).equals(aDeviceToFind)) {
-                                    onResult.onSuccess();
+                                    if (onResult != null) onResult.onSuccess();
                                     return;
                                 }
+                            } else
+                            if (aDevice instanceof JSONObject) {
+                                if (((JSONObject) aDevice).optString(JSON_DEVICE, "").equals(aDeviceToFind)) {
+                                    if (onResult != null) onResult.onSuccess();
+                                    return;
+                                }
+                            }
                         }
-                    onResult.onFail();
+                    if (onResult != null) onResult.onFail();
                 } else {
                     doError(resultCode, resultMsg);
                 }

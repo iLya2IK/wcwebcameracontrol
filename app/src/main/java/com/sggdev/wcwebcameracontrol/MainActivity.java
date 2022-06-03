@@ -272,8 +272,14 @@ public class MainActivity extends AppCompatActivity {
                                 if (res instanceof JSONArray)
                                     for (int i = 0; i < ((JSONArray) res).length(); i++) {
                                         Object aDevice = ((JSONArray) res).opt(i);
-                                        if (aDevice instanceof String)
+                                        if (aDevice instanceof String) {
                                             mAvailableDevices.add((String) aDevice);
+                                        } else
+                                        if (aDevice instanceof JSONObject) {
+                                            String aName = ((JSONObject) aDevice).optString(JSON_DEVICE, "");
+                                            String aMeta = ((JSONObject) aDevice).optString(JSON_META, "{}");
+                                            mAvailableDevices.addNameAndMeta(aName, aMeta);
+                                        }
                                     }
 
                                 refreshAvailableDevicesThreadSafe();
@@ -1077,6 +1083,18 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        public DeviceItem addNameAndMeta(String item, String meta) {
+            DeviceItem nitem = add(item);
+            if (nitem != null) {
+                lock();
+                try {
+                    DevList().completeItemWithMeta(nitem, meta);
+                } finally {
+                    unlock();
+                }
+            }
+            return nitem;
+        }
 
         public void add(BluetoothDevice bleDevice) {
             lock();

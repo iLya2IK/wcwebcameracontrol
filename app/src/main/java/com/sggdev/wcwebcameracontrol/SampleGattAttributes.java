@@ -97,7 +97,7 @@ public class SampleGattAttributes {
                 }
             }
         }
-        return null;
+        return "";
     }
 
     public static ArrayList<BabaikaCommand> getCommandSet(String chid) {

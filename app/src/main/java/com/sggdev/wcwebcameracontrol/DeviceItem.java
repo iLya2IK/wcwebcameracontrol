@@ -15,6 +15,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
     public static final String DEVICE_ITEM_BLE_ADDRESS = "ble_address";
     public static final String DEVICE_ITEM_CHAR = "ble_char";
     public static final String DEVICE_ITEM_COLOR = "color";
+    public static final String DEVICE_ITEM_META = "meta";
     public static final String DEVICE_ITEM_INDEX = "ind";
     public static final String DEVICE_ITEM_TIME_STAMP = "timestamp";
     public static final String DEVICE_ITEM_UNREAD_MSGS = "unread";
@@ -28,10 +29,11 @@ public class DeviceItem implements Comparable<DeviceItem> {
     private String mServerName = "";
     private String mDeviceWriteChar = "";
     private String mDevicePicture = "";
-    private int mDevicePictureID;
+    private int mDevicePictureID = 0;
     private int mDeviceColor = DEFAULT_DEVICE_COLOR;
     private int mDeviceIndex = 0;
     private long mDBID = -1;
+    private JSONObject mMeta = new JSONObject();
     private String mLastSync = "";
     private int mUnReadedMsgs = 0;
 
@@ -88,6 +90,29 @@ public class DeviceItem implements Comparable<DeviceItem> {
         updateSecondaryValues();
     }
 
+    void completeWithMeta(String meta) {
+        if (meta.length() > 0) {
+            setMeta(meta);
+            if (mMeta.length() > 0) {
+                String deviceBLEName = mMeta.optString(DEVICE_ITEM_BLE_NAME, "");
+                if (deviceBLEName.length() > 0)
+                    bleName = deviceBLEName;
+                String writeAttr = mMeta.optString(DEVICE_ITEM_CHAR, "");
+                if (writeAttr.length() > 0)
+                    mDeviceWriteChar = writeAttr;
+            }
+            updateSecondaryValues();
+        }
+    }
+
+    void setMeta(String meta) {
+        try {
+            mMeta = new JSONObject(meta);
+        } catch (JSONException e) {
+            mMeta = new JSONObject();
+        }
+    }
+
     boolean tryToCompleteFrom(DeviceItem an_device,
                                String deviceServerName,
                                String deviceBLEName,
@@ -101,6 +126,9 @@ public class DeviceItem implements Comparable<DeviceItem> {
             if (deviceBLEName.length() > 0)
                 bleName = deviceBLEName;
             if (this != an_device) {
+                if (an_device.mMeta.length() > 0) {
+                    setMeta(an_device.mMeta.toString());
+                }
                 mDBID = an_device.mDBID;
                 mDeviceWriteChar = an_device.mDeviceWriteChar;
                 mDeviceColor = an_device.mDeviceColor;
@@ -133,6 +161,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
             cached_item.put(DEVICE_ITEM_COLOR, mDeviceColor);
             cached_item.put(DEVICE_ITEM_INDEX, mDeviceIndex);
             cached_item.put(DEVICE_ITEM_TIME_STAMP, mLastSync);
+            cached_item.put(DEVICE_ITEM_META, mMeta.toString());
             cached_item.put(DEVICE_ITEM_UNREAD_MSGS, mUnReadedMsgs);
             return cached_item.toString();
         } catch (JSONException e) {
@@ -161,6 +190,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
             mDeviceColor = cached_item.getInt(DEVICE_ITEM_COLOR);
             mLastSync = cached_item.getString(DEVICE_ITEM_TIME_STAMP);
             mUnReadedMsgs = cached_item.getInt(DEVICE_ITEM_UNREAD_MSGS);
+            setMeta(cached_item.getString(DEVICE_ITEM_META));
 
             updateSecondaryValues();
         } catch (JSONException e) {
@@ -216,6 +246,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
     int getDevicePictureID() { return mDevicePictureID;  }
     long getDbId() { return  mDBID; }
     String getLstSync() { return mLastSync; }
+    JSONObject getMeta() {return mMeta; }
 
     boolean isBLEAvaible() {return (device != null);}
     boolean isBLEConnected() {return mIsBLEConnected;}

@@ -7,6 +7,7 @@ import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_CHAR;
 import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_COLOR;
 import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_DB_ID;
 import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_INDEX;
+import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_META;
 import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_SERVER_NAME;
 import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_TIME_STAMP;
 import static com.sggdev.wcwebcameracontrol.DeviceItem.DEVICE_ITEM_UNREAD_MSGS;
@@ -23,6 +24,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -30,6 +32,7 @@ import androidx.annotation.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,7 +48,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
 
     // Database Info
     private static final String DATABASE_NAME = "chatDatabase";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 2;
 
     // Table Names
     private static final String TABLE_DEVICES = "devices";
@@ -59,6 +62,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
     private static final String KEY_MSG_TEXT = "text";
     private static final String KEY_MSG_STATE = "state";
     private static final String KEY_MSG_TIMESTAMP = "stamp";
+    private static final String KEY_MSG_LOCAL_TIMESTAMP = "lstamp";
 
     //Media Table Columns
     private static final String KEY_MEDIA_ID = "medId";
@@ -79,12 +83,32 @@ public class ChatDatabase extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    SQLiteStatement stmt_insert_media, stmt_get_last_timestamp;
+
     @Override
+    @SuppressLint("DefaultLocale")
     public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
         db.setForeignKeyConstraintsEnabled(true);
-        // init statements
+    }
 
+    @Override
+    @SuppressLint("DefaultLocale")
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        // init statements
+        stmt_insert_media = db.compileStatement(
+                String.format("insert into %s (%s, %s, %s, %s) values (?,?,?,?)",
+                        TABLE_MEDIA, KEY_MEDIA_DEVICE_ID_FK, KEY_MEDIA_RID, KEY_MEDIA_META, KEY_MEDIA_LOC));
+        stmt_get_last_timestamp = db.compileStatement(
+                String.format("with target1 as (values (''), (?)) "+
+                                "select max(%s) from %s " +
+                                "inner join %s on %s.%s == %s.%s " +
+                                "where (%s in target1)",
+                        KEY_MSG_TIMESTAMP, TABLE_MSGS,
+                        TABLE_DEVICES, TABLE_DEVICES, DEVICE_ITEM_DB_ID, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
+                        KEY_MSG_TARGET
+                ));
     }
 
     private void createDevicesTable(SQLiteDatabase sqLiteDatabase) {
@@ -97,6 +121,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 DEVICE_ITEM_CHAR + " text default '', "+
                 DEVICE_ITEM_INDEX + " integer default 0, "+
                 DEVICE_ITEM_COLOR + " integer default " + Integer.valueOf(DEFAULT_DEVICE_COLOR).toString() + ", "+
+                DEVICE_ITEM_META + " text default '{}', "+
                 DEVICE_ITEM_TIME_STAMP + " text default current_timestamp " +
                 ");");
     }
@@ -109,7 +134,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 KEY_MSG_TARGET + " text default ''," +
                 KEY_MSG_TEXT + " text default '', "+
                 KEY_MSG_STATE + " integer default " + Integer.valueOf(MSG_STATE_UNKNOWN).toString() + ", "+
-                KEY_MSG_TIMESTAMP + " text default current_timestamp " +
+                KEY_MSG_TIMESTAMP + " text default current_timestamp, " +
+                KEY_MSG_LOCAL_TIMESTAMP + " text default current_timestamp " +
                 ");");
     }
 
@@ -135,18 +161,9 @@ public class ChatDatabase extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
         if (oldVersion != newVersion) {
-            if ((oldVersion == 2) && (newVersion == 3)) {
-                createMediaTable(sqLiteDatabase);
-            } else
-            if ((oldVersion == 1) && (newVersion == 2)) {
-                sqLiteDatabase.execSQL("ALTER TABLE " + TABLE_MSGS +
-                        " ADD COLUMN " + KEY_MSG_STATE + " integer default " +
-                        Integer.valueOf(MSG_STATE_UNKNOWN).toString() + ";");
-            } else {
-                sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_DEVICES);
-                sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_MSGS);
-                onCreate(sqLiteDatabase);
-            }
+            sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_DEVICES);
+            sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_MSGS);
+            onCreate(sqLiteDatabase);
         }
     }
 
@@ -207,6 +224,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 values.put(DEVICE_ITEM_CHAR, device.getDeviceWriteChar());
                 values.put(DEVICE_ITEM_COLOR, device.getDeviceItemColor());
                 values.put(DEVICE_ITEM_INDEX, device.getDeviceItemIndex());
+                values.put(DEVICE_ITEM_META, device.getMeta().toString());
                 values.put(DEVICE_ITEM_TIME_STAMP, device.getLstSync());
 
                 ArrayList<String> whereArgs = new ArrayList<>();
@@ -296,6 +314,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         cursor.getColumnIndex(DEVICE_ITEM_CHAR),
                         cursor.getColumnIndex(DEVICE_ITEM_COLOR),
                         cursor.getColumnIndex(DEVICE_ITEM_INDEX),
+                        cursor.getColumnIndex(DEVICE_ITEM_META),
                         cursor.getColumnIndex(DEVICE_ITEM_TIME_STAMP)
                 };
                 do {
@@ -308,7 +327,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         cached_item.put(DEVICE_ITEM_CHAR, cursor.getString(cInt[4]));
                         cached_item.put(DEVICE_ITEM_COLOR, cursor.getInt(cInt[5]));
                         cached_item.put(DEVICE_ITEM_INDEX, cursor.getInt(cInt[6]));
-                        cached_item.put(DEVICE_ITEM_TIME_STAMP, cursor.getString(cInt[7]));
+                        cached_item.put(DEVICE_ITEM_META, cursor.getString(cInt[7]));
+                        cached_item.put(DEVICE_ITEM_TIME_STAMP, cursor.getString(cInt[8]));
                         cached_item.put(DEVICE_ITEM_UNREAD_MSGS, 0);
                         res.add(cached_item);
                     } catch (JSONException e) {
@@ -505,44 +525,38 @@ public class ChatDatabase extends SQLiteOpenHelper {
 
         SQLiteDatabase db = getWritableDatabase();
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("insert into %s (%s, %s, %s, %s) values ",
-                TABLE_MEDIA, KEY_MEDIA_DEVICE_ID_FK, KEY_MEDIA_RID, KEY_MEDIA_META, KEY_MEDIA_LOC));
-        boolean nxt = false;
-        for (WCChat.ChatMedia item : items) {
-            if (item.getSender() >= 0) {
-                if (nxt) sb.append(",");
-
-                sb.append("(");
-                sb.append(item.getSender());
-                sb.append(",");
-                sb.append(item.getServerRID());
-                sb.append(",'");
-                sb.append(item.getMetaData().replaceAll("'","''"));
-                sb.append("','");
-                sb.append(item.getLocation().replaceAll("'","''"));
-                sb.append("')");
-
-                nxt = true;
-            }
-        }
-
         try {
-            db.execSQL(sb.toString());
+            db.beginTransaction();
+
+            for (WCChat.ChatMedia item : items) {
+                if (item.getSender() >= 0) {
+                    stmt_insert_media.clearBindings();
+                    stmt_insert_media.bindLong(1, item.getSender());
+                    stmt_insert_media.bindLong(2, item.getServerRID());
+                    stmt_insert_media.bindString(3, item.getMetaData());
+                    stmt_insert_media.bindString(4, item.getLocation());
+                    stmt_insert_media.executeInsert();
+                }
+            }
+
+            db.setTransactionSuccessful(); // This commits the transaction if there were no exceptions
+
         } catch (Exception e) {
             Log.d(TAG, "Error while trying to add media records");
             e.printStackTrace();
+        } finally {
+            db.endTransaction();
         }
     }
 
     @SuppressLint("DefaultLocale")
-    List<WCChat.ChatMedia> getMedia(List<Integer> rids) {
+    List<WCChat.ChatMedia> getMedia(List<Long> rids) {
         if (rids.size() == 0) return null;
 
         StringBuilder MEDIA_SELECT_QUERY = new StringBuilder();
         MEDIA_SELECT_QUERY.append("with atable as (values ");
         boolean nxt = false;
-        for (Integer id : rids) {
+        for (Long id : rids) {
             if (nxt) MEDIA_SELECT_QUERY.append(",");
             MEDIA_SELECT_QUERY.append(String.format("(%d)", id));
             nxt = true;
@@ -680,7 +694,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
     }
 
     @SuppressLint("DefaultLocale")
-    boolean checkNewMessages(String aUserName, String aLastCheck, List<WCChat.ChatMessage> aList) {
+    boolean checkNewMessages(String aDeviceName, String aLastCheck, List<WCChat.ChatMessage> aList) {
         int added = 0;
         String POSTS_SELECT_QUERY;
         if (aLastCheck != null && aLastCheck.length() > 0)
@@ -691,11 +705,11 @@ public class ChatDatabase extends SQLiteOpenHelper {
                                 "inner join %s on %s.%s == %s.%s " +
                                 "where  (%s > '%s') and (%s > %s.%s) and (%s in target1) "+
                                 "order by %s",
-                        aUserName.replaceAll("'", "''"),
-                        KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, DEVICE_ITEM_SERVER_NAME, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_TIMESTAMP, TABLE_MSGS,
+                        aDeviceName.replaceAll("'", "''"),
+                        KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, DEVICE_ITEM_SERVER_NAME, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_LOCAL_TIMESTAMP, TABLE_MSGS,
                         TABLE_DEVICES, TABLE_DEVICES, DEVICE_ITEM_DB_ID, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
                         KEY_MSG_TIMESTAMP, aLastCheck, KEY_MSG_TIMESTAMP, TABLE_DEVICES, DEVICE_ITEM_TIME_STAMP,
-                        KEY_MSG_TARGET, KEY_MSG_TIMESTAMP
+                        KEY_MSG_TARGET, KEY_MSG_LOCAL_TIMESTAMP
                 );
         else
             POSTS_SELECT_QUERY =
@@ -705,11 +719,11 @@ public class ChatDatabase extends SQLiteOpenHelper {
                                     "inner join %s on %s.%s == %s.%s " +
                                     "where  (%s > %s.%s) and (%s in target1) "+
                                     "order by %s",
-                            aUserName.replaceAll("'", "''"),
-                            KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, DEVICE_ITEM_SERVER_NAME, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_TIMESTAMP, TABLE_MSGS,
+                            aDeviceName.replaceAll("'", "''"),
+                            KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, DEVICE_ITEM_SERVER_NAME, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_LOCAL_TIMESTAMP, TABLE_MSGS,
                             TABLE_DEVICES, TABLE_DEVICES, DEVICE_ITEM_DB_ID, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
                             KEY_MSG_TIMESTAMP, TABLE_DEVICES, DEVICE_ITEM_TIME_STAMP,
-                            KEY_MSG_TARGET, KEY_MSG_TIMESTAMP
+                            KEY_MSG_TARGET, KEY_MSG_LOCAL_TIMESTAMP
                     );
 
         SQLiteDatabase db = getReadableDatabase();
@@ -750,50 +764,34 @@ public class ChatDatabase extends SQLiteOpenHelper {
         return (added > 0);
     }
 
-    public String getLastMsgTimeStamp(String aUserName) {
-        @SuppressLint("DefaultLocale") String POSTS_SELECT_QUERY =
-                String.format("with target1 as (values (''), ('%s')) "+
-                                "select max(%s) from %s " +
-                                "inner join %s on %s.%s == %s.%s " +
-                                "where (%s in target1)",
-                        aUserName.replaceAll("'", "''"),
-                        KEY_MSG_TIMESTAMP, TABLE_MSGS,
-                        TABLE_DEVICES, TABLE_DEVICES, DEVICE_ITEM_DB_ID, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
-                        KEY_MSG_TARGET
-                );
-
+    public String getLastMsgTimeStamp(String aDeviceName) {
         String lstStamp = "";
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery(POSTS_SELECT_QUERY, null);
+
+        stmt_get_last_timestamp.bindString(1, aDeviceName);
         try {
-            if (cursor.moveToFirst()) {
-                lstStamp = cursor.getString(0);
-            }
+            lstStamp = stmt_get_last_timestamp.simpleQueryForString();
         } catch (Exception e) {
             Log.d(TAG, "Error while trying to get last timestamp from database");
             e.printStackTrace();
-        } finally {
-            if (cursor != null && !cursor.isClosed()) {
-                cursor.close();
-            }
         }
+
         return lstStamp;
     }
 
     @SuppressLint("DefaultLocale")
-    public int getNewMessagesCount(String aUserName, String aLastSync, List<WCChat.DeviceMsgsCnt> aList) {
+    public int getNewMessagesCount(String aDeviceName, String aLastSync, List<WCChat.DeviceMsgsCnt> aList) {
         int added = 0;
         String POSTS_SELECT_QUERY;
         if (aLastSync != null && aLastSync.length() > 0)
            POSTS_SELECT_QUERY =
                     String.format("with "+
                                     "target1 as (values (''), ('%s')) "+
-                                    "select %s, %s, count(*) from %s " +
+                                    "select %s, %s, count(*), max(%s) from %s " +
                                     "inner join %s on %s.%s == %s.%s " +
                                     "where (%s > '%s') and (%s > %s.%s) and "+
                                     "(%s in target1) group by %s",
-                            aUserName.replaceAll("'", "''"),
-                            DEVICE_ITEM_DB_ID, DEVICE_ITEM_SERVER_NAME, TABLE_MSGS,
+                            aDeviceName.replaceAll("'", "''"),
+                            DEVICE_ITEM_DB_ID, DEVICE_ITEM_SERVER_NAME, KEY_MSG_TIMESTAMP, TABLE_MSGS,
                             TABLE_DEVICES, TABLE_DEVICES, DEVICE_ITEM_DB_ID, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
                             KEY_MSG_TIMESTAMP, aLastSync, KEY_MSG_TIMESTAMP, TABLE_DEVICES, DEVICE_ITEM_TIME_STAMP,
                             KEY_MSG_TARGET, DEVICE_ITEM_DB_ID
@@ -806,7 +804,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                                     "inner join %s on %s.%s == %s.%s " +
                                     "where (%s > %s.%s) and (%s in target1) "+
                                     "group by %s",
-                            aUserName.replaceAll("'", "''"),
+                            aDeviceName.replaceAll("'", "''"),
                             DEVICE_ITEM_DB_ID, DEVICE_ITEM_SERVER_NAME, KEY_MSG_TIMESTAMP, TABLE_MSGS,
                             TABLE_DEVICES, TABLE_DEVICES, DEVICE_ITEM_DB_ID, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
                             KEY_MSG_TIMESTAMP, TABLE_DEVICES, DEVICE_ITEM_TIME_STAMP, KEY_MSG_TARGET,
@@ -850,7 +848,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                                 " ((%s.%s == %d) and (%s.%s > '%s') and (%s.%s in target2)) "+
                                 "or "+
                                 " ((%s.%s == %d) and (%s.%s > '%s') and (%s.%s in target1))) "+
-                                "select %s, %s, %s, %s, %s, %s from total_table order by %s",
+                                "select %s, %s, %s, %s, %s, %s, %s from total_table order by %s",
                         DEVICE_ITEM_SERVER_NAME, TABLE_DEVICES, DEVICE_ITEM_DB_ID, aUser.getDbId(),
                         DEVICE_ITEM_SERVER_NAME, TABLE_DEVICES, DEVICE_ITEM_DB_ID, aFrom.getDbId(),
                         TABLE_MSGS, TABLE_DEVICES, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
@@ -861,8 +859,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         TABLE_DEVICES, DEVICE_ITEM_DB_ID, aFrom.getDbId(),
                         TABLE_MSGS, KEY_MSG_TIMESTAMP, aFrom.getLstSync(),
                         TABLE_MSGS, KEY_MSG_TARGET,
-                        KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_TIMESTAMP,
-                        KEY_MSG_TIMESTAMP
+                        KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_TIMESTAMP, KEY_MSG_LOCAL_TIMESTAMP,
+                        KEY_MSG_LOCAL_TIMESTAMP
                 );
 
         SQLiteDatabase db = getReadableDatabase();
@@ -876,6 +874,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                     String msgTrgDevice = cursor.getString(3);
                     String txt = cursor.getString(4);
                     String stamp = cursor.getString(5);
+                    String lstamp = cursor.getString(6);
 
                     DeviceItem dbDevice = null;
                     if (msgSrcDeviceId == aUser.getDbId()) {
@@ -890,7 +889,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         WCChat.ChatMessage newPost = new WCChat.ChatMessage(msgID);
                         newPost.setSender(dbDevice);
                         newPost.setRawMessage(txt);
-                        newPost.setTimeStamp(stamp);
+                        newPost.setTimeStamp(lstamp);
                         newPost.setTarget(msgTrgDevice);
                         newPost.setState(state);
                         messageList.add(newPost);
@@ -924,7 +923,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                                        " ((%s.%s == %d) and (%s.%s in target2)) "+
                                 "or "+
                                        " ((%s.%s == %d) and (%s.%s in target1))) "+
-                        "select %s, %s, %s, %s, %s, %s from total_table order by %s",
+                        "select %s, %s, %s, %s, %s, %s, %s from total_table order by %s",
                         DEVICE_ITEM_SERVER_NAME, TABLE_DEVICES, DEVICE_ITEM_DB_ID, aUser.getDbId(),
                         DEVICE_ITEM_SERVER_NAME, TABLE_DEVICES, DEVICE_ITEM_DB_ID, aFrom.getDbId(),
                         TABLE_MSGS, TABLE_DEVICES, TABLE_MSGS, KEY_MSG_DEVICE_ID_FK,
@@ -933,8 +932,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         TABLE_MSGS, KEY_MSG_TARGET,
                         TABLE_DEVICES, DEVICE_ITEM_DB_ID, aFrom.getDbId(),
                         TABLE_MSGS, KEY_MSG_TARGET,
-                        KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_TIMESTAMP,
-                        KEY_MSG_TIMESTAMP
+                        KEY_MSG_ID, KEY_MSG_DEVICE_ID_FK, KEY_MSG_STATE, KEY_MSG_TARGET, KEY_MSG_TEXT, KEY_MSG_TIMESTAMP, KEY_MSG_LOCAL_TIMESTAMP,
+                        KEY_MSG_LOCAL_TIMESTAMP
                         );
 
         SQLiteDatabase db = getReadableDatabase();
@@ -948,6 +947,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                     String msgTrgDevice = cursor.getString(3);
                     String txt = cursor.getString(4);
                     String stamp = cursor.getString(5);
+                    String lstamp = cursor.getString(6);
 
                     DeviceItem dbDevice = null;
                     if (msgSrcDeviceId == aUser.getDbId()) {
@@ -962,7 +962,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                         WCChat.ChatMessage newPost = new WCChat.ChatMessage(msgID);
                         newPost.setSender(dbDevice);
                         newPost.setRawMessage(txt);
-                        newPost.setTimeStamp(stamp);
+                        newPost.setTimeStamp(lstamp);
                         newPost.setTarget(msgTrgDevice);
                         newPost.setState(state);
                         messageList.add(newPost);

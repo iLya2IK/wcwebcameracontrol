@@ -189,7 +189,7 @@ public class WCChat {
         private String createdAtTime = "";
         private String createdAtDate = "";
         private String msg = "";
-        private int rid = -1;
+        private long rid = -1;
         private JSONObject jsonObject = null;
         private JSONObject jsonParams = null;
 
@@ -209,7 +209,7 @@ public class WCChat {
         int getState() {return state;}
         JSONObject getJsonObject() {return jsonObject;}
         JSONObject getJsonParams() {return jsonParams;}
-        int getRid() {return rid;}
+        long getRid() {return rid;}
 
         boolean hasMedia() {
             return (rid >= 0);
@@ -224,7 +224,7 @@ public class WCChat {
             message = amsg;
             try {
                 jsonObject = new JSONObject(amsg);
-                rid = jsonObject.optInt(JSON_RID, -1);
+                rid = jsonObject.optLong(JSON_RID, -1);
                 msg = jsonObject.optString(JSON_MSG, "");
                 Object params = jsonObject.opt(JSON_PARAMS);
                 if (params instanceof JSONObject) jsonParams = (JSONObject)params;

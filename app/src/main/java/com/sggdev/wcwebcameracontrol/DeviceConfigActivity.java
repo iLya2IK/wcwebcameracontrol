@@ -354,6 +354,7 @@ public class DeviceConfigActivity extends Activity {
                 if ((it.getOptions() & CFG_OPT_PASSWORD) > 0)
                     itp |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
                 input.setInputType(itp);
+                input.setText(it.getValue());
 
                 // Set up the buttons
                 builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {

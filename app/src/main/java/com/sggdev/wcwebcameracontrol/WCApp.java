@@ -126,6 +126,16 @@ public class WCApp extends Application implements Configuration.Provider, Lifecy
             }
         }
 
+        void completeItemWithMeta(DeviceItem aItem,
+                          String meta) {
+            lock();
+            try {
+                aItem.completeWithMeta(meta);
+            } finally {
+                unlock();
+            }
+        }
+
         void completeItem(DeviceItem aItem,
                           String deviceBLEName,
                           String deviceBLEAddress) {

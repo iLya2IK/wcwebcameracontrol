@@ -15,8 +15,8 @@ import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_IMAGE_BITMAP;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
+import static com.sggdev.wcwebcameracontrol.WCPicPreviewHelper.MIN_PIC_SIZE_DPI;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.REST_RESULT_OK;
-import static com.sggdev.wcwebcameracontrol.WCRollingRID.MIN_PIC_SIZE_DPI;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -205,7 +205,8 @@ public class DeviceChatActivity extends Activity {
     }
 
     private void scrollDown() {
-        mMessageRecycler.smoothScrollToPosition(mMessageList.size() - 1);
+        if (mMessageList.size() > 0)
+            mMessageRecycler.smoothScrollToPosition(mMessageList.size() - 1);
         mScrollDown.setVisibility(View.GONE);
     }
 
@@ -248,8 +249,10 @@ public class DeviceChatActivity extends Activity {
         mMessageRecycler.addOnLayoutChangeListener(
                 (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
             if ( bottom < oldBottom) {
-                mMessageRecycler.postDelayed(() ->
-                        mMessageRecycler.smoothScrollToPosition(mMessageList.size()-1),
+                mMessageRecycler.postDelayed(() -> {
+                            if (mMessageList.size() > 0)
+                                mMessageRecycler.smoothScrollToPosition(mMessageList.size() - 1);
+                        },
                         100);
             }
         });
@@ -585,8 +588,7 @@ public class DeviceChatActivity extends Activity {
 
     private void startUpdateMsgs() {
         WCHTTPClient httpClient = WCHTTPClientHolder.getInstance(DeviceChatActivity.this);
-        //todo : doSync = false|true
-        httpClient.recvMsgs(DeviceChatActivity.this, false);
+        httpClient.recvMsgs(DeviceChatActivity.this, true);
     }
 
     private void startUpdateSnaps() {
@@ -635,7 +637,7 @@ public class DeviceChatActivity extends Activity {
         startUpdateSnaps();
         startUpdateStatus();
         startSendUnsentMsgs();
-        do {} while (loadNextMedia());
+        while (loadNextMedia());
     }
 
     private void doIdle() {
@@ -691,23 +693,20 @@ public class DeviceChatActivity extends Activity {
     }
 
     private void updateMediaContentFromTo(int start, int count) {
-        List<WCChat.ChatMedia> list = new ArrayList<>();
-        final List<Integer> ridsToAdd = new ArrayList<>();
+        final List<WCChat.ChatMedia> list = new ArrayList<>();
+        List<Long> ridsToAdd = new ArrayList<>();
 
         for (int i = start; i < (start + count); i++) {
             if (mMessageList.get(i).hasMedia()) {
-                final int rid = mMessageList.get(i).getRid();
+                final long rid = mMessageList.get(i).getRid();
                 WCChat.ChatMedia media;
                 synchronized (mMediaTable) {
                     media = mMediaTable.get(rid);
                 }
                 if (media != null) {
                     if (!media.isComplete()) {
-                        // if config.mediaAutoload == true
-                        if (media.isMediaExists(this)) {
+                        if (media.isMediaExists(this))
                             media.setComplete();
-                            mMessageAdapter.notifyItemChanged(i);
-                        }
                         else
                             list.add(media);
                     }
@@ -718,41 +717,38 @@ public class DeviceChatActivity extends Activity {
         updateMediaContentListed(list);
 
         if (ridsToAdd.size() > 0) {
-            new Thread(() -> {
-                ChatDatabase db = ChatDatabase.getInstance(DeviceChatActivity.this);
-                final List<WCChat.ChatMedia> new_media = db.getMedia(ridsToAdd);
+            ChatDatabase db = ChatDatabase.getInstance(DeviceChatActivity.this);
+            List<WCChat.ChatMedia> new_media = db.getMedia(ridsToAdd);
 
-                if (new_media != null && new_media.size() > 0) {
-                    DeviceChatActivity.this.runOnUiThread(() -> {
-                        List<WCChat.ChatMedia> nlist = new ArrayList<>();
-                        for (WCChat.ChatMedia media : new_media) {
-                            synchronized (mMediaTable) {
-                                mMediaTable.put(media.getServerRID(), media);
-                            }
-                            // if config.mediaAutoload == true
-                            if (media.isMediaExists(this))
-                                doCompleteMedia(media);
-                            else
-                                nlist.add(media);
-                        }
-                        updateMediaContentListed(nlist);
-                    });
+            if (new_media != null && new_media.size() > 0) {
+                final List<WCChat.ChatMedia> nlist = new ArrayList<>();
+                for (WCChat.ChatMedia media : new_media) {
+                    synchronized (mMediaTable) {
+                        mMediaTable.put(media.getServerRID(), media);
+                    }
+                    if (media.isMediaExists(this))
+                        media.setComplete();
+                    else
+                        nlist.add(media);
                 }
-            }).start();
+                updateMediaContentListed(nlist);
+            }
         }
     }
 
     private void updateMediaContentListed(List<WCChat.ChatMedia> list) {
-        for (WCChat.ChatMedia media : list) {
-            try {
-                if (media.startLoading()) {
-                    mediaBlockingQueue.put(media);
+        new Thread(() -> {
+            for (WCChat.ChatMedia media : list) {
+                try {
+                    if (media.startLoading()) {
+                        mediaBlockingQueue.put(media);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
-        }
-        do {} while (loadNextMedia());
+            while (loadNextMedia());
+        }).start();
     }
 
     private boolean loadNextMedia() {
@@ -1117,6 +1113,10 @@ public class DeviceChatActivity extends Activity {
                                                             previewHelper.getBitmap());
                             height = previewHelper.getHeight();
                             width = previewHelper.getWidth();
+                            float scale = WCPicPreviewHelper.getDisplayScale(DeviceChatActivity.this,
+                                    width, height);
+                            height *= scale;
+                            width *= scale;
                         }
                     }
                     if (drawing == null) {

@@ -31,17 +31,8 @@ public class WCHTTPBackgroundWork extends Worker {
         super(appContext, workerParams);
     }
 
-    private String errorStr = "";
-
-    @SuppressLint("DefaultLocale")
-    @NonNull
-    @Override
-    public Result doWork() {
-        Log.d(TAG, "WCHTTPService on doWork");
-
-        WCApp myApp = (WCApp) getApplicationContext();
-
-        final String aLstMsg = getInputData().getString(LST_MESSAGE);
+    public static void doSync(WCApp myApp, String aLstMsg) {
+        final StringBuilder mErrStr = new StringBuilder();
 
         PowerManager pm = (PowerManager) myApp.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_TAG);
@@ -54,8 +45,8 @@ public class WCHTTPBackgroundWork extends Worker {
 
                 @Override
                 public void onDisconnect(int errCode) {
-                    errorStr = WCRESTProtocol.REST_RESPONSE_ERRORS[errCode];
-                    Log.d(TAG, errorStr);
+                    mErrStr.append( WCRESTProtocol.REST_RESPONSE_ERRORS[errCode]);
+                    Log.d(TAG, mErrStr.toString());
                 }
 
                 @Override
@@ -64,7 +55,7 @@ public class WCHTTPBackgroundWork extends Worker {
                 @Override
                 public void onLoginError(int errCode, String errStr) {
                     Log.d(TAG, errStr);
-                    errorStr = errStr;
+                    mErrStr.append( errStr );
                 }
             };
 
@@ -90,7 +81,7 @@ public class WCHTTPBackgroundWork extends Worker {
                 new WCHTTPResync.Builder(myApp, aLstMsg)
                         .addNotifyListener()
                         .setClientState(httpClient.state())
-                        .setErrorMsg(errorStr)
+                        .setErrorMsg(mErrStr.toString())
                         .doResync();
 
             } finally {
@@ -103,9 +94,21 @@ public class WCHTTPBackgroundWork extends Worker {
 
         Log.d(TAG, "restarting sync");
 
-        WCHTTPResync.launchWCHTTPBackgroundWork(getApplicationContext());
+        WCHTTPResync.launchWCHTTPBackgroundWork(myApp);
 
         Log.d(TAG, "WCHTTPService on destroy");
+    }
+
+    @SuppressLint("DefaultLocale")
+    @NonNull
+    @Override
+    public Result doWork() {
+        Log.d(TAG, "WCHTTPService on doWork");
+
+        final WCApp myApp = (WCApp) getApplicationContext();
+        final String aLstMsg = getInputData().getString(LST_MESSAGE);
+
+        doSync(myApp, aLstMsg);
 
         return Result.success();
     }

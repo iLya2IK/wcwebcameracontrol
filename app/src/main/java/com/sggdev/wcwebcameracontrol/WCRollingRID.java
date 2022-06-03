@@ -13,8 +13,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class WCRollingRID {
-    public final static int MIN_PIC_SIZE_DPI = 96;
-
     private final ReentrantLock lock = new ReentrantLock();
 
     public interface OnLoadingFinished {
@@ -128,24 +126,8 @@ public class WCRollingRID {
             }
 
             int height = bitmap.getHeight();
-            DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
-            //max image width = 90% of width - 30dp
-            int max_bounding = (int) Math.round(displayMetrics.widthPixels * 0.9 -
-                    30.0 * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-            int min_bounding = Math.round(MIN_PIC_SIZE_DPI * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-            int bounding;
 
-            float xScale, yScale, scale;
-            if (width > max_bounding || height > max_bounding) {
-                bounding = max_bounding;
-            } else if (width < min_bounding || height < min_bounding) {
-                bounding = min_bounding;
-            } else {
-                bounding = Math.max(width, height);
-            }
-            xScale = ((float) bounding) / width;
-            yScale = ((float) bounding) / height;
-            scale = Math.min(xScale, yScale);
+            float scale = WCPicPreviewHelper.getDisplayScale(mContext, width, height);
 
             Matrix matrix = new Matrix();
             matrix.postScale(scale, scale);
