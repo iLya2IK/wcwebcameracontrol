@@ -1,5 +1,7 @@
 package com.sggdev.wcwebcameracontrol;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
 import static com.sggdev.wcwebcameracontrol.ChatDatabase.MEDIA_LOC;
 import static com.sggdev.wcwebcameracontrol.ChatDatabase.MSG_STATE_READY_TO_SEND;
@@ -73,6 +75,7 @@ public class DeviceChatActivity extends Activity {
     private long mUserDeviceId;
 
     private DeviceIconView mDeviceIcon;
+    private LinearLayout mPlayStream;
     private RecyclerView mMessageRecycler;
     private MessageListAdapter mMessageAdapter;
     private List<WCChat.ChatMessage> mMessageList;
@@ -265,6 +268,8 @@ public class DeviceChatActivity extends Activity {
 
         mOutParamsTable = findViewById(R.id.table_gchat_send);
         mOutParamsTable.setColumnStretchable(1, true);
+
+        mPlayStream = findViewById(R.id.device_online);
 
         final TextView sDate = findViewById(R.id.stamp_cur_date);
 
@@ -489,6 +494,18 @@ public class DeviceChatActivity extends Activity {
             fieldValue.setOnClickListener(click);
         });
 
+        mPlayStream.setVisibility(GONE);
+
+        mPlayStream.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final Intent data = new Intent(DeviceChatActivity.this,
+                        StreamFullscreenActivity.class);
+
+                data.putExtra(EXTRAS_DEVICE_HOST_NAME, mDeviceHostName);
+                startActivity(data);
+            }
+        });
 
         loadMessageList();
     }
@@ -610,6 +627,18 @@ public class DeviceChatActivity extends Activity {
                         updateConnectionState(R.drawable.disconnected);
                     }
                 });
+        httpClient.checkDeviceStreaming(DeviceChatActivity.this, mDeviceHostName,
+                new OnBooleanRequestFinished() {
+                    @Override
+                    public void onSuccess() {
+                        updateStreamingState(VISIBLE);
+                    }
+
+                    @Override
+                    public void onFail() {
+                        updateStreamingState(GONE);
+                    }
+                });
     }
 
     private void startSendUnsentMsgs() {
@@ -630,6 +659,12 @@ public class DeviceChatActivity extends Activity {
 
     private void updateConnectionState(final int resourceId) {
         runOnUiThread(() -> mDeviceIcon.updateConnectionState(resourceId));
+    }
+
+    private void updateStreamingState(final int state) {
+        runOnUiThread(() -> {
+            mPlayStream.setVisibility(state);
+        });
     }
 
     private void startUpdateAll() {

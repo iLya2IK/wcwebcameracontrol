@@ -14,15 +14,18 @@ public class WCRESTProtocol {
     public static final int REST_ERR_NO_DATA_RETURNED  = 10;
     public static final int REST_ERR_EMPTY_REQUEST     = 11;
     public static final int REST_ERR_MALFORMED_REQUEST = 12;
+    public static final int REST_ERR_NO_CHANNEL        = 13;
+    public static final int REST_ERR_ERRORED_STREAM    = 14;
+    public static final int REST_ERR_NO_SUCH_DEVICE    = 15;
 
-    public static final int REST_ERR_NETWORK_UNK       = 13;
-    public static final int REST_ERR_NETWORK_TIMEOUT   = 14;
-    public static final int REST_ERR_NETWORK_HOST      = 15;
-    public static final int REST_ERR_NETWORK_SHUT      = 16;
-    public static final int REST_ERR_NETWORK_IO        = 17;
-    public static final int REST_ERR_NETWORK_ILLEGAL   = 18;
-    public static final int REST_ERR_NETWORK_ON_LOGIN  = 19;
-    public static final int REST_DISCONNECT_BY_USER    = 20;
+    public static final int REST_ERR_NETWORK_UNK       = 16;
+    public static final int REST_ERR_NETWORK_TIMEOUT   = 17;
+    public static final int REST_ERR_NETWORK_HOST      = 18;
+    public static final int REST_ERR_NETWORK_SHUT      = 19;
+    public static final int REST_ERR_NETWORK_IO        = 20;
+    public static final int REST_ERR_NETWORK_ILLEGAL   = 21;
+    public static final int REST_ERR_NETWORK_ON_LOGIN  = 22;
+    public static final int REST_DISCONNECT_BY_USER    = 23;
 
     public static final String [] REST_RESPONSE_ERRORS  = {
                                   "NO_ERROR",
@@ -38,6 +41,9 @@ public class WCRESTProtocol {
                                   "NO_DATA_RETURNED",
                                   "EMPTY_REQUEST",
                                   "MALFORMED_REQUEST",
+                                  "NO_CHANNEL",
+                                  "ERRORED_STREAM",
+                                  "NO_SUCH_DEVICE",
                                   "REST_ERR_NETWORK_UNK",
                                   "REST_ERR_NETWORK_TIMEOUT",
                                   "REST_ERR_NETWORK_HOST",
@@ -87,7 +93,11 @@ public class WCRESTProtocol {
     public static final String WC_REST_getMsgs = "/getMsgs.json";
     public static final String WC_REST_getMsgsAndSync = "/getMsgsAndSync.json";
     public static final String WC_REST_getDevicesOnline = "/getDevicesOnline.json";
+    public static final String WC_REST_getStreams = "/getStreams.json";
     public static final String WC_REST_getConfig = "/getConfig.json";
     public static final String WC_REST_setConfig = "/setConfig.json";
     public static final String WC_REST_heartBit = "/heartBit.json";
+
+    public static final String WC_REST_strInput = "input.raw";
+    public static final String WC_REST_strOutput = "output.raw";
 }

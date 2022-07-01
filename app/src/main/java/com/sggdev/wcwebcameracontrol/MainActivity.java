@@ -307,7 +307,8 @@ public class MainActivity extends AppCompatActivity {
                     final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 
                     for (BluetoothDevice bluetoothDevice : bluetoothManager.getConnectedDevices(BluetoothProfile.GATT))
-                        if (bluetoothDevice.getName().startsWith(SampleGattAttributes.BLE_NAME_PREFIX))
+                        if ((bluetoothDevice.getName() != null) &&
+                             (bluetoothDevice.getName().startsWith(SampleGattAttributes.BLE_NAME_PREFIX)))
                             mAvailableDevices.add(bluetoothDevice);
 
                     startBLEScaning();

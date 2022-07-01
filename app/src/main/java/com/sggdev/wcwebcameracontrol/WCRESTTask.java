@@ -3,29 +3,29 @@ package com.sggdev.wcwebcameracontrol;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.JSON_CODE;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.JSON_OK;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.JSON_RESULT;
-import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.REST_ERR_NETWORK_UNK;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.REST_ERR_UNSPECIFIED;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.REST_RESULT_OK;
 
 import android.app.Activity;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.internal.http2.ConnectionShutdownException;
 
-public class WCRESTTask extends Thread {
+public class WCRESTTask extends WCTask {
 
     public static final MediaType JSONMedia
             = MediaType.get("application/json; charset=utf-8");
@@ -33,36 +33,27 @@ public class WCRESTTask extends Thread {
     public static final int WC_RESULT_JSON_OBJ = 0;
     public static final int WC_RESULT_RAW_DATA = 1;
 
-    private final WCHTTPClient client;
     private final Activity mActivity;
     private OnJSONRequestFinished onJSONFinish = null;
     private OnRawRequestFinished onRawFinish = null;
-    private String errorStr;
-    private int errorCode = REST_ERR_NETWORK_UNK;
-    private String mURL;
     private String mMethod;
     private String mContent;
     private final int mWaitingResult;
 
     WCRESTTask(WCHTTPClient aClient, Activity activity) {
-        client = aClient;
+        super(aClient);
         mActivity = activity;
         mWaitingResult = WC_RESULT_JSON_OBJ;
     }
 
     WCRESTTask(WCHTTPClient aClient, Activity activity, int resultKind) {
-        client = aClient;
+        super(aClient);
         mActivity = activity;
         mWaitingResult = resultKind;
     }
 
-    void execute(String... params) {
-        setParams(params);
-        start();
-    }
-
     void setParams(String... params) {
-        mURL = params[0];
+        super.setParams(params);
         mMethod = params[1];
         mContent = params[2];
     }
@@ -94,8 +85,8 @@ public class WCRESTTask extends Thread {
             if (onJSONFinish != null) {
                 try {
                     JSONObject resObj = new JSONObject();
-                    resObj.put(JSON_RESULT, errorStr);
-                    onJSONFinish.onChange(errorCode, resObj);
+                    resObj.put(JSON_RESULT, getErrorStr());
+                    onJSONFinish.onChange(getErrorCode(), resObj);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -107,11 +98,11 @@ public class WCRESTTask extends Thread {
                         JSONObject jsonObj = new JSONObject(new String(resp, StandardCharsets.UTF_8));
                         workWithJSON(jsonObj);
                     } catch (JSONException e) {
-                        errorStr = e.toString();
+                        setErrorStr(e.toString());
                         try {
                             JSONObject resObj = new JSONObject();
-                            resObj.put(JSON_RESULT, errorStr);
-                            onJSONFinish.onChange(errorCode, resObj);
+                            resObj.put(JSON_RESULT, getErrorStr());
+                            onJSONFinish.onChange(getErrorCode(), resObj);
                         } catch (JSONException ex) {
                             ex.printStackTrace();
                         }
@@ -121,7 +112,7 @@ public class WCRESTTask extends Thread {
             if (mWaitingResult == WC_RESULT_RAW_DATA) {
                 boolean isRawData = true;
                 if ((resp.length < 30) && (onJSONFinish != null)) {
-                    JSONObject jsonObj = null;
+                    JSONObject jsonObj;
                     try {
                         jsonObj = new JSONObject(Arrays.toString(resp));
                         workWithJSON(jsonObj);
@@ -137,30 +128,57 @@ public class WCRESTTask extends Thread {
     }
 
     @Override
-    public void run() {
+    void internalExecute(boolean sync) {
         byte[] execResult = null;
         try {
             RequestBody body = RequestBody.create(mContent, JSONMedia);
             Request request = new Request.Builder()
-                    .url(mURL + mMethod)
+                    .url(getURL() + mMethod)
                     .post(body)
                     .build();
-            try (Response response = client.getClient().newCall(request).execute()) {
-                execResult = Objects.requireNonNull(response.body()).bytes();
+            if (sync) {
+                try (Response response = getClient().getClient().newCall(request).execute()) {
+                    execResult = Objects.requireNonNull(response.body()).bytes();
+                }
+            } else {
+                Call call =  getClient().getClient().newCall(request);
+                call.enqueue(new Callback() {
+                    private void finish(byte[] execInternalResult) {
+                        final byte[] passValue = execInternalResult;
+                        if (mActivity != null)
+                            mActivity.runOnUiThread(new Thread(() -> onPostExecute(passValue)));
+                        else
+                            onPostExecute(passValue);
+                    }
+
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                        byte[] execInternalResult = Objects.requireNonNull(response.body()).bytes();
+                        finish(execInternalResult);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        consumeException(e);
+                        finish(null);
+                    }
+                });
             }
         } catch (Exception e) {
-            errorStr = e.toString();
-            if (e instanceof SocketTimeoutException) errorCode = WCRESTProtocol.REST_ERR_NETWORK_TIMEOUT;
-            else if (e instanceof UnknownHostException) errorCode = WCRESTProtocol.REST_ERR_NETWORK_HOST;
-            else if (e instanceof ConnectionShutdownException) errorCode = WCRESTProtocol.REST_ERR_NETWORK_SHUT;
-            else if (e instanceof IOException) errorCode = WCRESTProtocol.REST_ERR_NETWORK_IO;
-            else if (e instanceof IllegalStateException) errorCode = WCRESTProtocol.REST_ERR_NETWORK_ILLEGAL;
-            else errorCode = WCRESTProtocol.REST_ERR_NETWORK_UNK;
+            if (e instanceof IOException) {
+                consumeException((IOException)e);
+            } else {
+                setErrorStr(e.toString());
+                if (e instanceof IllegalStateException) setErrorCode(WCRESTProtocol.REST_ERR_NETWORK_ILLEGAL);
+                else setErrorCode(WCRESTProtocol.REST_ERR_NETWORK_UNK);
+            }
         }
-        final byte[] passValue = execResult;
-        if (mActivity != null)
-            mActivity.runOnUiThread (new Thread(() -> onPostExecute(passValue)));
-        else
-            onPostExecute(passValue);
+        if (sync) {
+            final byte[] passValue = execResult;
+            if (mActivity != null)
+                mActivity.runOnUiThread(new Thread(() -> onPostExecute(passValue)));
+            else
+                onPostExecute(passValue);
+        }
     }
 }

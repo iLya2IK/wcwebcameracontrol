@@ -36,26 +36,43 @@ import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.WC_REST_getMsgs;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.WC_REST_getMsgsAndSync;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.WC_REST_getRecordCount;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.WC_REST_getRecordData;
+import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.WC_REST_getStreams;
 import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.WC_REST_heartBit;
+import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.WC_REST_strOutput;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import okhttp3.Call;
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okio.Buffer;
+import okio.BufferedSource;
 
 public class WCHTTPClient {
     interface OnStateChangeListener {
@@ -201,6 +218,53 @@ public class WCHTTPClient {
         }
     }
 
+    void checkDeviceInResult(JSONObject resultMsg, final String aDeviceToFind,
+                             OnBooleanRequestFinished onResult) {
+        Object res = resultMsg.opt(JSON_DEVICES);
+
+        if (res instanceof JSONArray)
+            for (int i = 0; i < ((JSONArray) res).length(); i++) {
+                Object aDevice = ((JSONArray) res).opt(i);
+                if (aDevice instanceof String) {
+                    if (((String) aDevice).equals(aDeviceToFind)) {
+                        if (onResult != null) onResult.onSuccess();
+                        return;
+                    }
+                } else
+                if (aDevice instanceof JSONObject) {
+                    if (((JSONObject) aDevice).optString(JSON_DEVICE, "").equals(aDeviceToFind)) {
+                        if (onResult != null) onResult.onSuccess();
+                        return;
+                    }
+                }
+            }
+        if (onResult != null) onResult.onFail();
+    }
+
+    void checkDeviceStreaming(Activity caller, final String aDeviceToFind,
+                              OnBooleanRequestFinished onResult) {
+        if (httpClientState != CS_CONNECTED)
+            if (onResult != null) onResult.onFail();
+
+        try {
+            JSONObject obj = new JSONObject();
+            obj.put(JSON_SHASH, cfg.getSID());
+
+            WCRESTTask wc_task = new WCRESTTask(this, caller);
+            wc_task.setOnJSONResponseListener((resultCode, resultMsg) -> {
+                if (resultCode == REST_RESULT_OK) {
+                    checkDeviceInResult(resultMsg, aDeviceToFind, onResult);
+                } else {
+                    doError(resultCode, resultMsg);
+                }
+            });
+            wc_task.execute(cfg.getHostURL(),
+                    WC_REST_getStreams, obj.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     void checkDeviceConnected(Activity caller, final String aDeviceToFind,
                               OnBooleanRequestFinished onResult) {
 
@@ -214,25 +278,7 @@ public class WCHTTPClient {
             WCRESTTask wc_task = new WCRESTTask(this, caller);
             wc_task.setOnJSONResponseListener((resultCode, resultMsg) -> {
                 if (resultCode == REST_RESULT_OK) {
-                    Object res = resultMsg.opt(JSON_DEVICES);
-
-                    if (res instanceof JSONArray)
-                        for (int i = 0; i < ((JSONArray) res).length(); i++) {
-                            Object aDevice = ((JSONArray) res).opt(i);
-                            if (aDevice instanceof String) {
-                                if (((String) aDevice).equals(aDeviceToFind)) {
-                                    if (onResult != null) onResult.onSuccess();
-                                    return;
-                                }
-                            } else
-                            if (aDevice instanceof JSONObject) {
-                                if (((JSONObject) aDevice).optString(JSON_DEVICE, "").equals(aDeviceToFind)) {
-                                    if (onResult != null) onResult.onSuccess();
-                                    return;
-                                }
-                            }
-                        }
-                    if (onResult != null) onResult.onFail();
+                    checkDeviceInResult(resultMsg, aDeviceToFind, onResult);
                 } else {
                     doError(resultCode, resultMsg);
                 }
@@ -293,7 +339,7 @@ public class WCHTTPClient {
 
     public void heartBitSynchro(Activity caller) {
         WCRESTTask wc_task = heartBitPrepare(caller);
-        if (wc_task != null) wc_task.run();
+        if (wc_task != null) wc_task.internalExecute(false);
     }
 
     private WCRESTTask startConnectPrepare(Activity caller) {
@@ -330,7 +376,7 @@ public class WCHTTPClient {
 
     public void startConnectSynchro(Activity caller) {
         WCRESTTask wc_task = startConnectPrepare(caller);
-        if (wc_task != null) wc_task.run();
+        if (wc_task != null) wc_task.internalExecute(true);
     }
 
     private WCRESTTask sendMsgsPrepare(Activity caller, DeviceItem aUser, int limit,
@@ -400,7 +446,7 @@ public class WCHTTPClient {
                          OnIdChangedListener onResult) {
         WCRESTTask wc_task = sendMsgsPrepare(caller, aUser, limit,
                 onResult);
-        if (wc_task != null) wc_task.run();
+        if (wc_task != null) wc_task.internalExecute(true);
     }
 
     public void sendSync(Activity caller) {
@@ -503,7 +549,7 @@ public class WCHTTPClient {
 
     public void recvSnapsSynchro(Activity caller) {
         WCRESTTask wc_task = recvSnapsPrepare(caller);
-        if (wc_task != null) wc_task.run();
+        if (wc_task != null) wc_task.internalExecute(true);
     }
 
     public WCRESTTask recvMsgsPrepare(Activity caller, boolean doSync) {
@@ -578,7 +624,7 @@ public class WCHTTPClient {
 
     public void recvMsgsSynchro(Activity caller, boolean doSync) {
         WCRESTTask wc_task = recvMsgsPrepare(caller, doSync);
-        if (wc_task != null) wc_task.run();
+        if (wc_task != null) wc_task.internalExecute(true);
     }
 
     private WCRESTTask getRecordDataPrepare(Activity caller, WCChat.ChatMedia media,
@@ -607,6 +653,15 @@ public class WCHTTPClient {
         }
     }
 
+    private WCStreamTask getStartStreamPrepare(String aDeviceName) {
+        if (httpClientState != CS_CONNECTED) return null;
+
+        WCStreamTask wc_task = new WCStreamTask(this);
+        wc_task.setParams(cfg.getHostURL(),
+                cfg.getSID(), aDeviceName);
+        return wc_task;
+    }
+
     public void getRecordData(Activity caller, WCChat.ChatMedia media,
                               OnRawRequestFinished onFinish) {
         WCRESTTask wc_task = getRecordDataPrepare(caller, media, onFinish);
@@ -619,10 +674,45 @@ public class WCHTTPClient {
                               OnRawRequestFinished onFinish) {
         WCRESTTask wc_task = getRecordDataPrepare(caller, media, onFinish);
         if (wc_task != null)
-            wc_task.run();
+            wc_task.internalExecute(true);
     }
 
-    private static OkHttpClient getUnsafeOkHttpClient() {
+    public void launchStream(String aDeviceName) {
+        haltStream();
+        synchronized (frameLocker) {
+            if (!isStreamLaunched()) {
+                WCStreamTask wc_task = getStartStreamPrepare(aDeviceName);
+                if (wc_task != null) {
+                    streamLaunched();
+                    wc_task.start();
+                }
+            }
+        }
+    }
+
+    public void haltStream() {
+        synchronized (frameLocker) {
+            if (isStreamLaunched()) {
+                for (Call call : client.dispatcher().queuedCalls()) {
+                    Object tag = call.request().tag();
+                    if (tag != null) {
+                        if (tag.equals(WC_REST_strOutput))
+                        call.cancel();
+                    }
+                }
+                for (Call call : client.dispatcher().runningCalls()) {
+                    Object tag = call.request().tag();
+                    if (tag != null) {
+                        if (tag.equals(WC_REST_strOutput))
+                            call.cancel();
+                    }
+                }
+                streamClosed();
+            }
+        }
+    }
+
+    private OkHttpClient getUnsafeOkHttpClient() {
         try {
             // Create a trust manager that does not validate certificate chains
             final TrustManager[] trustAllCerts = new TrustManager[] {
@@ -658,10 +748,184 @@ public class WCHTTPClient {
             builder.readTimeout(30, SECONDS);
             builder.writeTimeout(20, SECONDS);
             builder.connectTimeout(20, SECONDS);
+            builder.addNetworkInterceptor(new ChunksInterceptor(this));
 
             return builder.build();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+
+    private static final int MAX_FRAME_BUFFER_SIZE = 0xA00000;
+    private static final short WEBCAM_FRAME_START_SEQ = -21846;
+    private static final int WEBCAM_FRAME_HEADER_SIZE = 6;
+    private final BlockingQueue<WCHTTPStreamFrame> framesBlockingQueue = new LinkedBlockingQueue<>();
+    private byte[] cur_frame = null;
+    private long cur_frame_len = 0;
+    private long cur_frame_sz = 0;
+    private int frame_state = 0;
+    private long frame_Id = 0;
+    private boolean stream_launched = false;
+    private final Object frameLocker = new Object();
+
+    public void streamLaunched() {
+        synchronized (frameLocker) {
+            stream_launched = true;
+            resetStreamData();
+        }
+    }
+
+    public boolean isStreamLaunched() {
+        synchronized (frameLocker) {
+            return stream_launched;
+        }
+    }
+
+    public void streamClosed() {
+        synchronized (frameLocker) {
+            stream_launched = false;
+        }
+    }
+
+    public void resetStreamData() {
+        framesBlockingQueue.clear();
+        synchronized (frameLocker) {
+            cur_frame = null;
+            cur_frame_len = 0;
+            cur_frame_sz = 0;
+            frame_state = 0;
+            frame_Id = 0;
+            cur_frame = new byte[MAX_FRAME_BUFFER_SIZE];
+        }
+    }
+
+    public WCHTTPStreamFrame popFrame() {
+        WCHTTPStreamFrame res = null;
+        try {
+            if (framesBlockingQueue.size() > 0)
+                res = framesBlockingQueue.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    private void pushStreamFrame(long offset) {
+        byte[] frame_data = new byte[(int)cur_frame_sz];
+        System.arraycopy(cur_frame, (int)offset + WEBCAM_FRAME_HEADER_SIZE,
+                frame_data, 0, (int)cur_frame_sz);
+        frame_Id++;
+        WCHTTPStreamFrame fr = new WCHTTPStreamFrame(frame_Id);
+        fr.setData(frame_data);
+        fr.setLen(cur_frame_sz);
+        try {
+            framesBlockingQueue.put(fr);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void truncateFrameBuffer(long buffer_pos) {
+        if (buffer_pos > 0) {
+            if ((cur_frame_len - buffer_pos) > 0) {
+                cur_frame_len = cur_frame_len - buffer_pos;
+                System.arraycopy(cur_frame, (int) buffer_pos, cur_frame, 0, (int) cur_frame_len);
+            }
+            else
+                cur_frame_len = 0;
+        }
+    }
+
+    private long bufferFreeSize() {return (MAX_FRAME_BUFFER_SIZE - cur_frame_len);}
+
+    private int consumeStreamData(long cnt, Buffer buffer) {
+        long chunk_pos = 0;
+        long buffer_pos = 0;
+        synchronized (frameLocker) {
+            while (true) {
+                if (bufferFreeSize() <= 0)
+                    return 1;
+
+                if (chunk_pos < cnt) {
+                    long P = cnt - chunk_pos;
+                    if (P > bufferFreeSize()) P = bufferFreeSize();
+                    buffer.read(cur_frame, (int)cur_frame_len, (int)P);
+                    chunk_pos += P;
+                    cur_frame_len += P;
+                }
+                switch (frame_state) {
+                    case 0: {
+                        cur_frame_sz = 0;
+                        if ((cur_frame_len - buffer_pos) >= WEBCAM_FRAME_HEADER_SIZE) {
+                            DataInputStream pkt = new DataInputStream(new ByteArrayInputStream(cur_frame));
+                            try {
+                                pkt.skipBytes((int)buffer_pos);
+                                short W = pkt.readShort();
+                                if (W == WEBCAM_FRAME_START_SEQ) {
+                                    int C = Integer.reverseBytes(pkt.readInt());
+                                    if (C > (MAX_FRAME_BUFFER_SIZE - WEBCAM_FRAME_HEADER_SIZE)) {
+                                        return 2;
+                                    } else {
+                                        cur_frame_sz = C;
+                                        frame_state = 1;
+                                    }
+                                } else {
+                                    return 3;
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            truncateFrameBuffer(buffer_pos);
+                            buffer_pos = 0;
+                            if (chunk_pos == cnt) return 0;
+                        }
+                        break;
+                    }
+                    case 1: {
+                        if ((cur_frame_len - buffer_pos) >= (cur_frame_sz + WEBCAM_FRAME_HEADER_SIZE)) {
+                            pushStreamFrame(buffer_pos);
+                            buffer_pos += cur_frame_sz + WEBCAM_FRAME_HEADER_SIZE;
+                            frame_state = 0;
+                        } else {
+                            truncateFrameBuffer(buffer_pos);
+                            buffer_pos = 0;
+                            if (chunk_pos == cnt) return 0;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    class ChunksInterceptor implements Interceptor {
+
+        private final WCHTTPClient mClient;
+
+        public ChunksInterceptor(WCHTTPClient client) {
+            mClient = client;
+        }
+
+        @NonNull
+        @Override
+        public Response intercept (Interceptor.Chain chain) throws IOException {
+            String uri = chain.request().url().toString();
+            Response originalResponse = chain.proceed(chain.request());
+            if (uri.contains(WC_REST_strOutput)) {
+                ResponseBody responseBody = originalResponse.body();
+                if (responseBody != null) {
+                    BufferedSource source = responseBody.source();
+                    Buffer buffer = new Buffer();
+                    // Returns true if there are no more bytes in this source
+                    while (!source.exhausted()) {
+                        long readBytes = source.read (buffer, 0x10000);
+                        mClient.consumeStreamData(readBytes, buffer);
+                    }
+                }
+            }
+            return originalResponse;
         }
     }
 }

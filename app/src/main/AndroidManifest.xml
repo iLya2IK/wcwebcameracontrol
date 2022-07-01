@@ -45,6 +45,12 @@
         </receiver>
 
         <activity
+            android:name=".StreamFullscreenActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:label="@string/title_activity_image_view_fullscreen"
+            android:theme="@style/AppTheme.Fullscreen" />
+        <activity
             android:name=".ImageViewFullscreenActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="false"

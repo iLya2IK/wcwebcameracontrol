@@ -30,9 +30,11 @@
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/drawable/shape_bg_incoming_msg.xml" value="0.1005" />
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/drawable/shape_bg_outgoing_msg.xml" value="0.1005" />
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/drawable/table_border.xml" value="0.1" />
-        <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/activity_device_chat.xml" value="0.2" />
+        <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/activity_device_chat.xml" value="0.2525832376578645" />
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/activity_image_view_fullscreen.xml" value="0.1" />
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/activity_stream_fullscreen.xml" value="0.1" />
+        <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/activity_stream_view_fullscreen.xml" value="0.1" />
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/content_device_chat.xml" value="0.25" />
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/device_icon_view.xml" value="0.10315315315315315" />
         <entry key="..\:/AndroidStudioProjects/wcwebcameracontrol/app/src/main/res/layout/edit_request_with_set_def.xml" value="0.33" />

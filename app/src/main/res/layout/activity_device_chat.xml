@@ -14,6 +14,32 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <LinearLayout
+        android:id="@+id/device_online"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintTop_toBottomOf="@+id/device_icon_view"
+        app:layout_constraintStart_toStartOf="parent">
+        <ImageView
+            android:id="@+id/device_online_play"
+            android:layout_width="48dp"
+            android:src="@drawable/ic_play_stream"
+            android:layout_height="48dp"
+            android:clickable="false"
+            android:focusable="false"/>
+        <TextView
+            android:id="@+id/device_online_text"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:clickable="false"
+            android:focusable="false"
+            android:text="The device is online now. Press to play"/>
+    </LinearLayout>
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_gchat"
@@ -22,7 +48,7 @@
 
         android:layout_marginBottom="16dp"
         app:layout_constrainedHeight="true"
-        app:layout_constraintTop_toBottomOf="@+id/device_icon_view"
+        app:layout_constraintTop_toBottomOf="@+id/device_online"
         app:layout_constraintBottom_toTopOf="@+id/layout_gchat_chatbox" />
 
     <TextView
@@ -34,7 +60,7 @@
         android:textColor="@color/colorTextLight"
         android:visibility="gone"
 
-        app:layout_constraintTop_toBottomOf="@+id/device_icon_view"
+        app:layout_constraintTop_toBottomOf="@+id/device_online"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
