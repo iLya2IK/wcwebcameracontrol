@@ -13,7 +13,7 @@ Web Camera Android client for [REST Web Camera Server](https://github.com/iLya2I
 - receiving and showing streaming video from the device
 
 ## Development environment
-Min Android SDK version 22
+Min Android SDK version 30
 
 ## Necessary libraries
 1. [okHttp v.4.9.3](https://square.github.io/okhttp/)
