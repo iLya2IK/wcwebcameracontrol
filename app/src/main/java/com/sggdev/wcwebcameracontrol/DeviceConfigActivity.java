@@ -1,5 +1,20 @@
 package com.sggdev.wcwebcameracontrol;
 
+import static com.sggdev.wcsdk.BabaikaCommonConfig.KEY_DEVICE;
+import static com.sggdev.wcsdk.BabaikaCommonConfig.KEY_HOST;
+import static com.sggdev.wcsdk.BabaikaCommonConfig.KEY_SSID;
+import static com.sggdev.wcsdk.BabaikaCommonConfig.KEY_USER;
+import static com.sggdev.wcsdk.BabaikaConfigNotif.BabaikaConfigItem.CFG_OPT_PASSWORD;
+import static com.sggdev.wcsdk.BabaikaConfigNotif.BabaikaConfigItem.CFG_OPT_READONLY;
+import static com.sggdev.wcsdk.DeviceItem.DEFAULT_DEVICE_COLOR;
+import static com.sggdev.wcwebcameracontrol.BluetoothService.ACTION_DATA_AVAILABLE;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_ADDRESS;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_HOST_NAME;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_INDEX;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
+
 import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
@@ -23,12 +38,18 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+
+import com.sggdev.wcsdk.BabaikaCommand;
+import com.sggdev.wcsdk.BabaikaConfigNotif;
+import com.sggdev.wcsdk.BabaikaItem;
+import com.sggdev.wcsdk.BabaikaNotiCommand;
+import com.sggdev.wcsdk.BabaikaNotification;
+import com.sggdev.wcsdk.SampleGattAttributes;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,21 +58,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-
-import static com.sggdev.wcwebcameracontrol.BabaikaConfigNotif.BabaikaConfigItem.CFG_OPT_PASSWORD;
-import static com.sggdev.wcwebcameracontrol.BabaikaConfigNotif.BabaikaConfigItem.CFG_OPT_READONLY;
-import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_DEVICE;
-import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_HOST;
-import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_SSID;
-import static com.sggdev.wcwebcameracontrol.BabaikaWebCamConfig.KEY_USER;
-import static com.sggdev.wcwebcameracontrol.BluetoothService.ACTION_DATA_AVAILABLE;
-import static com.sggdev.wcwebcameracontrol.DeviceItem.DEFAULT_DEVICE_COLOR;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_ADDRESS;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_HOST_NAME;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_INDEX;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
 
 public class DeviceConfigActivity extends Activity {
     private final static String TAG = DeviceConfigActivity.class.getSimpleName();
@@ -161,24 +167,27 @@ public class DeviceConfigActivity extends Activity {
                 }
             } else if (ACTION_DATA_AVAILABLE.equals(action)) {
                 String uuid = intent.getStringExtra(BluetoothService.EXTRA_DATA_CHAR);
-                for (BabaikaItem notification : mGattCharacteristics) {
-                    BabaikaNotification bnoti = null;
+                if (uuid != null) {
+                    if (uuid.length() > 8) uuid = uuid.substring(0, 8);
+                    for (BabaikaItem notification : mGattCharacteristics) {
+                        BabaikaNotification bnoti = null;
 
-                    if (notification instanceof BabaikaNotification) {
-                        bnoti = (BabaikaNotification) notification;
-                    } else if (notification instanceof BabaikaNotiCommand) {
-                        bnoti = ((BabaikaNotiCommand) notification).getNoti();
-                    }
+                        if (notification instanceof BabaikaNotification) {
+                            bnoti = (BabaikaNotification) notification;
+                        } else if (notification instanceof BabaikaNotiCommand) {
+                            bnoti = ((BabaikaNotiCommand) notification).getNoti();
+                        }
 
-                    if (bnoti != null) {
-                        if (bnoti.getUUID().equals(uuid)) {
-                            bnoti.setConnected(true);
-                            break;
+                        if (bnoti != null) {
+                            if (bnoti.getUUID().equals(uuid)) {
+                                bnoti.setConnected(true);
+                                break;
+                            }
                         }
                     }
+                    displayData(uuid,
+                            intent.getByteArrayExtra(BluetoothService.EXTRA_DATA));
                 }
-                displayData(uuid,
-                        intent.getByteArrayExtra(BluetoothService.EXTRA_DATA));
             } else if (BluetoothService.ACTION_INPUT_CHARACTERISTIC_DISCOVERED.equals(action)) {
                 BluetoothGattCharacteristic characteristic =  mBluetoothLeService.getWriteCharacteristic();
                 mWriteCharacteristicDiscovered = true;
@@ -188,7 +197,7 @@ public class DeviceConfigActivity extends Activity {
     };
 
     private void clearUI() {
-        mConfigList.setAdapter((ListAdapter) null);
+        mConfigList.setAdapter(null);
     }
 
     private void sendNotifySetting(BluetoothGattCharacteristic characteristic, boolean notifyEnable) {

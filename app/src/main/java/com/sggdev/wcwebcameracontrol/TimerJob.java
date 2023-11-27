@@ -4,6 +4,8 @@ import android.app.Activity;
 
 import java.util.TimerTask;
 
+import com.sggdev.wcsdk.OnValueChangedListener;
+
 public class TimerJob extends TimerTask {
 
     public interface OnJobExecute{

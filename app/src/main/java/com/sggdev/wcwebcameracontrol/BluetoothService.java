@@ -22,6 +22,8 @@ import java.util.UUID;
 
 import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
 
+import com.sggdev.wcsdk.SampleGattAttributes;
+
 public class BluetoothService extends Service {
     private final static String TAG = BluetoothService.class.getSimpleName();
 
@@ -154,7 +156,8 @@ public class BluetoothService extends Service {
                         Log.i(TAG, "onServicesDiscovered: characteristic=" + characteristic.getUuid());
 
                         if (mAutoSendMode) {
-                            if (characteristic.getUuid().toString().equals(mAutoSendWriteChar)) {
+                            String mid = characteristic.getUuid().toString().substring(0, 8);
+                            if (mid.equals(mAutoSendWriteChar)) {
                                 broadcastUpdate(ACTION_INPUT_CHARACTERISTIC_DISCOVERED);
                                 mWriteCharacteristic = characteristic;
                                 mAutoSendValue = 1;
@@ -212,13 +215,13 @@ public class BluetoothService extends Service {
             case ACTION_DATA_AVAILABLE:
                 final byte[] data = characteristic.getValue();
                 if (data != null && data.length > 0) {
-                    intent.putExtra(EXTRA_DATA_CHAR, characteristic.getUuid().toString());
+                    intent.putExtra(EXTRA_DATA_CHAR, characteristic.getUuid().toString().substring(0, 8));
                     intent.putExtra(EXTRA_DATA, data);
                 }
                 break;
             case ACTION_NOTIFICATION_GRANTED:
             case ACTION_NOTIFICATION_CANCELED:
-                intent.putExtra(EXTRA_DATA_CHAR, characteristic.getUuid().toString());
+                intent.putExtra(EXTRA_DATA_CHAR, characteristic.getUuid().toString().substring(0, 8));
                 break;
         }
         sendBroadcast(intent);
@@ -306,6 +309,8 @@ public class BluetoothService extends Service {
     public void setAutoDeviceWriteChar(final String writeChar, final String command) {
         mAutoSendMode = true;
         mAutoSendWriteChar = writeChar;
+        if (mAutoSendWriteChar.length() > 8)
+            mAutoSendWriteChar = mAutoSendWriteChar.substring(0, 8);
         mAutoSendCommand = command;
     }
 

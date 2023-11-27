@@ -1,524 +1,344 @@
 package com.sggdev.wcwebcameracontrol;
 
+import static com.sggdev.wcsdk.ChatDatabase.MEDIA_LOC;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_BY_USER;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_RETRY_OVER;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_USER_CFG_INCORRECT;
+import static com.sggdev.wcsdk.WCRESTProtocol.REST_RESULT_OK;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Application;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.provider.Settings;
-import android.util.Base64;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.util.Log;
 import android.view.ContextThemeWrapper;
+import android.widget.RemoteViews;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
-import androidx.lifecycle.ProcessLifecycleOwner;
-import androidx.work.Configuration;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
-import org.json.JSONObject;
+import com.sggdev.wcsdk.ChatDatabase;
+import com.sggdev.wcsdk.DeviceItem;
+import com.sggdev.wcsdk.WCAppCommon;
+import com.sggdev.wcsdk.WCChat;
+import com.sggdev.wcsdk.WCHTTPClient;
+import com.sggdev.wcsdk.WCHTTPClientHolder;
+import com.sggdev.wcsdk.WCHTTPResync;
+import com.sggdev.wcsdk.WCNotificationDismissedReceiver;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
+public class WCApp extends WCAppCommon {
 
-public class WCApp extends Application implements Configuration.Provider, LifecycleObserver {
+    private static final String TAG = "WCApp";
 
-    @Override
-    public Configuration getWorkManagerConfiguration() {
-        return new Configuration.Builder()
-                .setMinimumLoggingLevel(android.util.Log.INFO)
-                .build();
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    public void onAppBackgrounded() {
-        WCHTTPResync.restartWCHTTPBackgroundWork(this);
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    public void onAppForegrounded() { WCHTTPResync.stopWCHTTPBackgroundWork(this); }
-
-    class DevicesHolderList extends ArrayList<DeviceItem> {
-
-        private int mDeviceListUpdate = 0;
-        private boolean mDeviceItemsChanged = false;
-
-        private final ReentrantLock lock = new ReentrantLock();
-
-        public void lock() { lock.lock(); }
-
-        public void unlock() {
-            lock.unlock();
-        }
-
-        DevicesHolderList() {
-            loadFromDB();
-        }
-
-        void loadFromDB() {
-            ChatDatabase db = ChatDatabase.getInstance(WCApp.this);
-            List<JSONObject> items = db.getAllDevices();
-            lock();
-            try {
-                for (JSONObject obj : items)
-                    add(new DeviceItem(WCApp.this, obj));
-            } finally {
-                unlock();
-            }
-        }
-
-        void saveToDB() {
-            ChatDatabase db = ChatDatabase.getInstance(WCApp.this);
-            lock();
-            try {
-                db.addOrUpdateDevices(this);
-            } finally {
-                unlock();
-            }
-        }
-
-        void completeItem(DeviceItem aItem,
-                                String deviceServerName,
-                                String deviceBLEName,
-                                String deviceBLEAddress) {
-            lock();
-            try {
-                for (int i = 0; i < size(); i++)
-                    if (aItem.tryToCompleteFrom(get(i),
-                            deviceServerName,
-                            deviceBLEName,
-                            deviceBLEAddress))
-                        return;
-
-                aItem.complete(deviceServerName, deviceBLEName, deviceBLEAddress);
-            } finally {
-                unlock();
-            }
-        }
-
-        void completeItem(DeviceItem aItem,
-                          String deviceServerName) {
-            lock();
-            try {
-                for (int i = 0; i < size(); i++)
-                    if (aItem.tryToCompleteFrom(get(i),
-                            deviceServerName,
-                            "", ""))
-                        return;
-
-                aItem.complete(deviceServerName);
-            } finally {
-                unlock();
-            }
-        }
-
-        void completeItemWithMeta(DeviceItem aItem,
-                          String meta) {
-            lock();
-            try {
-                aItem.completeWithMeta(meta);
-            } finally {
-                unlock();
-            }
-        }
-
-        void completeItem(DeviceItem aItem,
-                          String deviceBLEName,
-                          String deviceBLEAddress) {
-            lock();
-            try {
-                for (int i = 0; i < size(); i++)
-                    if (aItem.tryToCompleteFrom(get(i),
-                            "",
-                            deviceBLEName,
-                            deviceBLEAddress))
-                        break;
-
-                aItem.complete("", deviceBLEName, deviceBLEAddress);
-            } finally {
-                unlock();
-            }
-        }
-
-        void setDeviceProps(DeviceItem aItem,
-                            int mDeviceColor,
-                            int mDeviceIndex) {
-            aItem.setProps(mDeviceColor, mDeviceIndex);
-            DeviceItem m_obj = findItem(aItem);
-            lock();
-            try {
-                if (m_obj != null) {
-                    if (m_obj != aItem)
-                        m_obj.setProps(mDeviceColor, mDeviceIndex);
-                    mDeviceItemsChanged = true;
-                    updateDeviceItems();
-                }
-            } finally {
-                unlock();
-            }
-        }
-
-        void setDeviceSyncProps(DeviceItem aItem,
-                            String mLstSync,
-                            int mCnt) {
-            aItem.setSyncProps(mLstSync, mCnt);
-            DeviceItem m_obj = findItem(aItem);
-            lock();
-            try {
-                if (m_obj != null) {
-                    if (m_obj != aItem)
-                        m_obj.setSyncProps(mLstSync, mCnt);
-                    mDeviceItemsChanged = true;
-                    updateDeviceItems();
-                }
-            } finally {
-                unlock();
-            }
-        }
-
-        public DeviceItem findItem(DeviceItem aobj) {
-            lock();
-            try {
-                for (DeviceItem obj : mDeviceItems)
-                    if (obj.equals(aobj))
-                        return obj;
-
-                return null;
-            } finally {
-                unlock();
-            }
-        }
-
-        public DeviceItem findItem(long devId) {
-            lock();
-            try {
-                if (devId > 0)
-                    for (DeviceItem obj : mDeviceItems)
-                        if (obj.getDbId() == devId)
-                            return obj;
-
-                return null;
-            } finally {
-                unlock();
-            }
-        }
-
-        public DeviceItem findItem(String devHostName) {
-            lock();
-            try {
-                if (devHostName != null && devHostName.length() > 0)
-                    for (DeviceItem obj : mDeviceItems)
-                        if (obj.getDeviceServerName().equals(devHostName))
-                            return obj;
-
-                return null;
-            } finally {
-                unlock();
-            }
-        }
-
-        public void saveItem(DeviceItem n_obj) {
-            DeviceItem m_obj = findItem(n_obj);
-            lock();
-            try {
-                if (m_obj != null) {
-                    mDeviceItemsChanged |= m_obj.updateFromResult(n_obj);
-                } else {
-                    mDeviceItems.add(n_obj);
-                    mDeviceItemsChanged = true;
-                }
-            } finally {
-                unlock();
-            }
-            updateDeviceItems();
-        }
-
-        void removeItem(DeviceItem n_obj) {
-            lock();
-            try {
-                DeviceItem r_obj = null;
-                for (DeviceItem obj : mDeviceItems)
-                    if (obj.equals(n_obj)) {
-                        r_obj = obj;
-                        break;
-                    }
-                if (r_obj != null) {
-                    mDeviceItemsChanged = true;
-                    mDeviceItems.remove(r_obj);
-                    updateDeviceItems();
-                }
-            } finally {
-                unlock();
-            }
-        }
-
-        void updateDeviceItems() {
-            lock();
-            try {
-                if (mDeviceListUpdate == 0 && mDeviceItemsChanged) {
-                    mDeviceItemsChanged = false;
-                    Collections.sort(mDeviceItems);
-                    saveToDB();
-                }
-            } finally {
-                unlock();
-            }
-        }
-
-        void beginUpdate() {
-            lock();
-            try {
-                mDeviceListUpdate++;
-            } finally {
-                unlock();
-            }
-        }
-        void endUpdate() {
-            lock();
-            try {
-                mDeviceListUpdate--;
-                updateDeviceItems();
-            } finally {
-                unlock();
-            }
-        }
-
-    }
-
-    DevicesHolderList mDeviceItems;
-
-    private static final char[] SSKW = {'s','o','m','e','S','e','c','r','e','t','K','e','y'};
-    static final String PREF_USER_PREFS  = "USER_PREFS";
-    static final String PREF_HTTP_CFG_URL  = "PREF_HTTP_CFG_URL";
-    static final String PREF_HTTP_CFG_USER = "PREF_HTTP_CFG_U";
-    static final String PREF_HTTP_CFG_PSW  = "PREF_HTTP_CFG_K";
-    static final String PREF_HTTP_CFG_DEVICE  = "PREF_HTTP_CFG_DEVICE";
-    static final String PREF_HTTP_CFG_SID  = "PREF_HTTP_CFG_SID";
-    static final String PREF_DB_CFG_LAST_REC = "PREF_DB_CFG_LAST_REC";
-    static final String PREF_DB_CFG_LAST_MSG = "PREF_DB_CFG_LAST_MSG";
-
-    @SuppressLint("HardwareIds")
-    protected String encrypt(String value ) {
-        try {
-            final byte[] bytes = value!=null ? value.getBytes(StandardCharsets.UTF_8) : new byte[0];
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(SSKW));
-            Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-            pbeCipher.init(Cipher.ENCRYPT_MODE, key,
-                    new PBEParameterSpec(Settings.Secure.getString(getContentResolver(),
-                            Settings.Secure.ANDROID_ID).getBytes(StandardCharsets.UTF_8), 16));
-            return new String(Base64.encode(pbeCipher.doFinal(bytes), Base64.NO_WRAP),
-                    StandardCharsets.UTF_8);
-
-        } catch( Exception e ) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @SuppressLint("HardwareIds")
-    protected String decrypt(String value){
-        try {
-            final byte[] bytes = value!=null ? Base64.decode(value,Base64.DEFAULT) : new byte[0];
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(SSKW));
-            Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-            pbeCipher.init(Cipher.DECRYPT_MODE, key,
-                    new PBEParameterSpec(Settings.Secure.getString(getContentResolver(),
-                            Settings.Secure.ANDROID_ID).getBytes(StandardCharsets.UTF_8), 16));
-            return new String(pbeCipher.doFinal(bytes),StandardCharsets.UTF_8);
-
-        } catch( Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String getSecurePref(String pref) {
-        SharedPreferences sp = getSharedPreferences(PREF_USER_PREFS, MODE_PRIVATE);
-        String res = sp.getString(pref, null);
-        if (res != null) {
-            res = decrypt(res);
-        }
-        return res;
-    }
-
-    private void setSecurePref(String pref, String value) {
-        SharedPreferences sp = getSharedPreferences(PREF_USER_PREFS, MODE_PRIVATE);
-        SharedPreferences.Editor spEd = sp.edit();
-        spEd.putString(pref, encrypt(value));
-        spEd.apply();
-    }
-
-    private String getPref(String pref) {
-        SharedPreferences sp = getSharedPreferences(PREF_USER_PREFS, MODE_PRIVATE);
-        return sp.getString(pref, null);
-    }
-
-    private void setPref(String pref, String value) {
-        SharedPreferences sp = getSharedPreferences(PREF_USER_PREFS, MODE_PRIVATE);
-        SharedPreferences.Editor spEd = sp.edit();
-        spEd.putString(pref, value);
-        spEd.apply();
-    }
-
-    public String getHttpCfgServerUrl() {
-        return getSecurePref(PREF_HTTP_CFG_URL);
-    }
-
-    public String getHttpCfgUserName() {
-        return getSecurePref(PREF_HTTP_CFG_USER);
-    }
-
-    public String getHttpCfgUserPsw() {
-        return getSecurePref(PREF_HTTP_CFG_PSW);
-    }
-
-    public void setHttpCfgServerUrl(String value) {
-        setSecurePref(PREF_HTTP_CFG_URL, value);
-    }
-
-    public void setHttpCfgUserName(String value) {
-        setSecurePref(PREF_HTTP_CFG_USER, value);
-    }
-
-    public void setHttpCfgUserPsw(String value) {
-        setSecurePref(PREF_HTTP_CFG_PSW, value);
-    }
-
-    public String getHttpCfgDevice() {
-        return getPref(PREF_HTTP_CFG_DEVICE);
-    }
-
-    public  void setHttpCfgDevice(String value) {
-        setPref(PREF_HTTP_CFG_DEVICE, value);
-    }
-
-    public String getHttpCfgSID() { return getPref(PREF_HTTP_CFG_SID); }
-
-    public String dbGetLastRecStamp() { return getPref(PREF_DB_CFG_LAST_REC); }
-
-    public void dbSetLastRecStamp(String value) { setPref(PREF_DB_CFG_LAST_REC, value); }
-
-    public String dbGetLastMsgStamp() { return getPref(PREF_DB_CFG_LAST_MSG); }
-
-    public void dbSetLastMsgStamp(String value) { setPref(PREF_DB_CFG_LAST_MSG, value); }
-
-    public  void setHttpCfgSID(String value) {
-        setPref(PREF_HTTP_CFG_SID, value);
-    }
-
-    public String getCurrentSsid() {
-        String ssid = null;
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-        if (networkInfo == null) {
-            return null;
-        }
-
-        if (networkInfo.isConnected()) {
-            final WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
-            if (connectionInfo != null && (connectionInfo.getSSID().length() > 0)) {
-                ssid = connectionInfo.getSSID();
-            }
-        }
-
-        return ssid;
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        WCHTTPResync.init(this);
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-
-        mDeviceItems = new DevicesHolderList();
-        WCHTTPClient wchttpClient = WCHTTPClientHolder.getInstance(this);
-        wchttpClient.setConfigInterface(new WCHTTPClient.WCClientConfigInterface() {
-            @Override
-            public String getUserName() {
-                return getHttpCfgUserName();
-            }
-
-            @Override
-            public String getHostURL() {
-                return getHttpCfgServerUrl();
-            }
-
-            @Override
-            public String getUserPassword() {
-                return getHttpCfgUserPsw();
-            }
-
-            @Override
-            public String getDeviceName() {
-                return getHttpCfgDevice();
-            }
-
-            @Override
-            public String getSID() {
-                return getHttpCfgSID();
-            }
-
-            @Override
-            public String getLastRecStamp() { return dbGetLastRecStamp(); }
-
-            @Override
-            public void setLastRecStamp(String aStamp) {dbSetLastRecStamp(aStamp);}
-
-            @Override
-            public String getLastMsgStamp() {return dbGetLastMsgStamp();}
-
-            @Override
-            public void setLastMsgStamp(String aStamp) {dbSetLastMsgStamp(aStamp);}
-        });
-        wchttpClient.addStateChangeListener(new WCHTTPClient.OnStateChangeListener() {
-
-            @Override
-            public void onConnect(String sid) {
-                setHttpCfgSID(sid);
-            }
-
-            @Override
-            public void onDisconnect(int code) {
-                setHttpCfgSID("");
-            }
-
-            @Override
-            public void onClientStateChanged(int newState) { /* none */ }
-
-            @Override
-            public void onLoginError(int errCode, String errStr) { /* none */ }
-        });
-    }
-
-    void alertWrongUser(Activity act,
-                        String errorStr,
-                        DialogInterface.OnClickListener onPositive) {
-        String msg = getString(R.string.alert_edit_config);
+    public void alertWrongUser(Activity act,
+                               String errorStr,
+                               DialogInterface.OnClickListener onPositive) {
+        String msg = getString(com.sggdev.wcsdk.R.string.alert_edit_config);
         if (errorStr != null)
-            msg = msg.concat(getString(R.string.details_prefix)).concat(errorStr);
+            msg = msg.concat(getString(com.sggdev.wcsdk.R.string.details_prefix)).concat(errorStr);
         final String msgTxt = msg;
         act.runOnUiThread (new Thread(() -> new AlertDialog.Builder(
-                new ContextThemeWrapper(act, R.style.AlertDialogCustom))
-                .setTitle(R.string.alert_refused_connection)
+                new ContextThemeWrapper(act, com.sggdev.wcsdk.R.style.AlertDialogCustom))
+                .setTitle(com.sggdev.wcsdk.R.string.alert_refused_connection)
                 .setMessage(msgTxt)
                 .setPositiveButton(android.R.string.yes, onPositive)
                 .setNegativeButton(android.R.string.cancel, null)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show()));
+    }
+
+    public static WCHTTPResync.OnSyncFinished cStandardNotifier = new WCHTTPResync.OnSyncFinished() {
+        @SuppressLint("UnspecifiedImmutableFlag")
+        private PendingIntent createOnDismissedIntent(Context context, int aNotificationId) {
+            Intent skipIntent = new Intent(context, WCNotificationDismissedReceiver.class);
+            skipIntent.setAction(WCNotificationDismissedReceiver.WC_SKIP);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                return PendingIntent.getBroadcast(context, 0, skipIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+            } else {
+                return PendingIntent.getBroadcast(context, 0, skipIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+        }
+
+        private NotificationCompat.Builder initNotification(Context context, int notId, Intent intent) {
+            PendingIntent skipPendingIntent = createOnDismissedIntent(context, notId);
+
+            NotificationCompat.Builder builder = WCHTTPResync.genNotifBuilder(context);
+
+            Drawable myLogo = ContextCompat.getDrawable(context, com.sggdev.wcsdk.R.mipmap.ic_launcher);
+
+            if (myLogo != null) {
+                Bitmap bitmap = Bitmap.createBitmap(myLogo.getIntrinsicWidth(),
+                        myLogo.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmap);
+                myLogo.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+                Path clipPath = new Path();
+                RectF rect = new RectF(0, 0, canvas.getWidth(), canvas.getHeight());
+                float radius = ((float)canvas.getWidth() / 4.0f);
+                clipPath.addRoundRect(rect, radius, radius, Path.Direction.CW);
+                canvas.clipPath(clipPath);
+                myLogo.draw(canvas);
+                builder.setLargeIcon(bitmap);
+            }
+            builder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setDeleteIntent(skipPendingIntent)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL)
+                    .setAutoCancel(true)
+                    .addAction(com.sggdev.wcsdk.R.drawable.ic_skip, context.getString(com.sggdev.wcsdk.R.string.skip),
+                            skipPendingIntent);
+            if (intent != null) {
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                builder.setContentIntent(pendingIntent);
+            }
+            return builder;
+        }
+
+        private void startNotification(Context context, int notId, NotificationCompat.Builder builder) {
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.notify(notId, builder.build());
+        }
+
+        @Override
+        @SuppressLint("DefaultLocale")
+        public boolean onNewMessagesSummary(Context context, int totalAmount,
+                                            String lstSync, List<WCChat.DeviceMsgsCnt> aList) {
+            List<WCChat.DeviceMsgsCnt> locList = new ArrayList<>();
+
+            if (lstSync == null ) return false;
+
+            for (WCChat.DeviceMsgsCnt item : aList) {
+                String stamp = item.getLstMsgTimeStamp();
+                if ((stamp == null) || (stamp.compareTo(lstSync) <= 0)) {
+                    totalAmount -= item.getCnt();
+                } else
+                    locList.add(item);
+            }
+            if (totalAmount <= 0) return false;
+
+            if (locList.size() == 1 && totalAmount <= 1) {
+                return true;
+            } else {
+                String textContent;
+                String textTitle;
+                int devIcon;
+
+                Intent intent = new Intent(context, MainActivity.class);
+
+                if (locList.size() == 1) {
+                    String devName = locList.get(0).getName();
+
+                    DeviceItem dev =
+                            ((WCApp)context.getApplicationContext()).
+                                    getDevicesHolderList().
+                                    findItem(((WCApp)context.getApplicationContext()).getHttpCfgFullUserName(),
+                                            devName);
+
+                    if (dev != null)
+                        devIcon = dev.getDevicePictureID();
+                    else
+                        devIcon = R.drawable.ic_default_device;
+
+                    textTitle = context.getString(R.string.new_messages);
+                    textContent = String.format(context.getString(R.string.messages_from),
+                            locList.get(0).getCnt(), devName);
+
+                    intent.putExtra(MainActivity.ACTION_LAUNCH_CHAT, devName);
+                } else {
+                    devIcon = R.drawable.ic_default_device;
+                    textTitle = context.getString(R.string.new_messages);
+                    textContent = String.format(context.getString(R.string.messages_from_devices),
+                            totalAmount, locList.size());
+
+                    intent.putExtra(MainActivity.ACTION_LAUNCH_CHAT, "");
+                }
+
+                Log.d(TAG, "do notification");
+                Log.d(TAG, textContent);
+
+                NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationId, intent);
+                builder.setSmallIcon(devIcon)
+                        .setContentTitle(textTitle)
+                        .setContentText(textContent);
+
+                startNotification(context, WCHTTPResync.notificationId, builder);
+
+                return false;
+            }
+        }
+
+        @Override
+        public void onNoMessages(Context context) {
+            //
+        }
+
+        @Override
+        @SuppressLint("DefaultLocale")
+        public void onNewMessages(Context context, List<WCChat.ChatMessage> aList, List<String> aDevices) {
+            if (aList.size() > 1) return;
+
+            WCChat.ChatMedia media = null;
+            WCChat.ChatMessage msg = aList.get(0);
+            if (msg.hasMedia()) {
+                Log.d(TAG, "there is media incoming");
+                List<Long> mediaId = new ArrayList<>();
+                mediaId.add(msg.getRid());
+                ChatDatabase db = ChatDatabase.getInstance(context);
+                final List<WCChat.ChatMedia> new_media = db.getMedia(mediaId);
+
+                if (new_media != null && new_media.size() > 0) {
+                    media = new_media.get(0);
+                    if (media.isMediaExists(context)) {
+                        media.setComplete();
+                    } else {
+                        media.startLoading();
+                        WCHTTPClient httpClient = WCHTTPClientHolder.getInstance(context);
+                        final WCChat.ChatMedia waiting_media = media;
+                        httpClient.getRecordDataSynchro(null, waiting_media,
+                                (resultCode, result) -> {
+                                    waiting_media.finishLoading();
+                                    if (resultCode == REST_RESULT_OK) {
+                                        if (waiting_media.saveMedia(context, result)) {
+                                            ChatDatabase adb = ChatDatabase.getInstance(context);
+                                            adb.updateMedia(waiting_media, MEDIA_LOC);
+
+                                            waiting_media.setComplete();
+                                        }
+                                    }
+                                });
+                    }
+                }
+            }
+
+
+            String textContent;
+            int devIcon;
+
+            String devName = aDevices.get(0);
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.putExtra(MainActivity.ACTION_LAUNCH_CHAT, devName);
+            NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationId, intent);
+
+            DeviceItem dev =
+                    ((WCApp)context.getApplicationContext()).
+                            getDevicesHolderList().
+                            findItem(((WCApp)context.getApplicationContext()).getHttpCfgFullUserName(),
+                                    devName);
+
+            if (dev != null)
+                devIcon = dev.getDevicePictureID();
+            else
+                devIcon = R.drawable.ic_default_device;
+
+            if (media != null && media.isComplete()) {
+                textContent = context.getString(R.string.media_captured);
+                Bitmap bitmap =
+                        ((BitmapDrawable)Drawable.createFromPath(media.getLocation()))
+                                .getBitmap();
+                builder.setLargeIcon(bitmap)
+                        .setStyle(new NotificationCompat.BigPictureStyle()
+                                .bigPicture(bitmap)
+                                .bigLargeIcon(null));
+                builder.setContentText(textContent);
+            } else {
+                textContent = msg.getMessage();
+                if (msg.hasJSONParams()) {
+                    RemoteViews notificationLayoutExpanded = new RemoteViews(context.getPackageName(),
+                            R.layout.incoming_notification);
+                    notificationLayoutExpanded.setTextViewText(R.id.textTitle, devName);
+                    notificationLayoutExpanded.setTextViewText(R.id.text, textContent);
+
+                    if (msg.hasJSONParams()) {
+                        Iterator<String> keys = msg.getJsonParams().keys();
+
+                        while (keys.hasNext()) {
+                            String key = keys.next();
+                            Object obj = msg.getJsonParams().opt(key);
+
+                            if (obj != null) {
+                                RemoteViews newView = new RemoteViews(context.getPackageName(), R.layout.notification_param_key_layout);
+                                newView.setTextViewText(R.id.text, key);
+                                notificationLayoutExpanded.addView(R.id.table_params, newView);
+
+                                newView = new RemoteViews(context.getPackageName(), R.layout.notification_param_layout);
+                                newView.setTextViewText(R.id.text, obj.toString());
+                                notificationLayoutExpanded.addView(R.id.table_params, newView);
+                            }
+                        }
+                    }
+
+                    // Apply the layouts to the notification
+                    builder.setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                            .setCustomBigContentView(notificationLayoutExpanded);
+                } else {
+                    builder.setStyle(new NotificationCompat.BigTextStyle().bigText(textContent));
+                }
+            }
+
+            Log.d(TAG, "do notification");
+            Log.d(TAG, textContent);
+
+            builder.setSmallIcon(devIcon)
+                   .setContentTitle(devName);
+
+            startNotification(context, WCHTTPResync.notificationId, builder);
+
+        }
+
+        @Override
+        public void onError(Context context, int state, String aError) {
+
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.putExtra(MainActivity.ACTION_LAUNCH_CONFIG, MainActivity.ACTION_LAUNCH_CONFIG);
+            NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationFailId, intent);
+            builder.setSmallIcon(android.R.drawable.ic_dialog_alert);
+
+            switch (state) {
+                case CS_DISCONNECTED_RETRY_OVER:
+                case CS_DISCONNECTED_BY_USER: {
+                    //
+                    builder.setContentTitle(context.getString(R.string.err_connect_to_server))
+                            .setContentText(String.format(context.getString(R.string.err_connect_message),
+                                    aError));
+
+                    startNotification(context, WCHTTPResync.notificationFailId, builder);
+
+                    break;
+                }
+
+                case CS_USER_CFG_INCORRECT: {
+                    //
+                    builder.setContentTitle(context.getString(R.string.err_connect_to_server))
+                            .setContentText(String.format(context.getString(R.string.err_wrong_config_message),
+                                    aError));
+
+                    startNotification(context, WCHTTPResync.notificationFailId, builder);
+
+                    break;
+                }
+            }
+        }
+    };
+
+    public WCHTTPResync.OnSyncFinished getOnSyncNotify() {
+        return cStandardNotifier;
     }
 }

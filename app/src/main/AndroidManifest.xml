@@ -26,7 +26,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <receiver
-            android:name=".WCNotificationDismissedReceiver"
+            android:name="com.sggdev.wcsdk.WCNotificationDismissedReceiver"
             android:enabled="true"
             android:exported="false" />
 

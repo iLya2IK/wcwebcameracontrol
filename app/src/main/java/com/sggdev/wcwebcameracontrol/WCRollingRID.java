@@ -5,9 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.DisplayMetrics;
 
 import androidx.core.content.ContextCompat;
+
+import com.sggdev.wcsdk.ChatDatabase;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,7 +25,7 @@ public class WCRollingRID {
     private final String mLocation;
     private boolean mIsLoaded = false;
     private boolean mIsLoading = false;
-    private boolean mRefreshPreview;
+    private final boolean mRefreshPreview;
     private byte[] newPreview = null;
     private OnLoadingFinished onFinished = null;
     private BitmapDrawable mBitmap = null;

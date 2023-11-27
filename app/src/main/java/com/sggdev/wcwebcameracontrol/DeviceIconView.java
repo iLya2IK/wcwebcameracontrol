@@ -3,13 +3,10 @@ package com.sggdev.wcwebcameracontrol;
 import static android.view.Gravity.CENTER;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -18,6 +15,9 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.sggdev.wcsdk.DeviceItem;
+import com.sggdev.wcsdk.SampleGattAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,6 @@ public class DeviceIconView extends LinearLayout {
         initLayout(context);
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public DeviceIconView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initLayout(context);

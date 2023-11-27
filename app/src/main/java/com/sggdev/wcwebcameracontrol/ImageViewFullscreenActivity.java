@@ -31,7 +31,6 @@ public class ImageViewFullscreenActivity extends AppCompatActivity {
         }
         catch (Exception e) {
             e.printStackTrace();
-            d = null;
         }
         finally {
             if (d == null)

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="connect">Соединиться</string>
+
+    <string name="hello_world">Hello Square World!</string>
+    <string name="connected">Подключено</string>
+    <string name="disconnected">Отключено</string>
+    <string name="no_data">
+    <![CDATA[ <nothing> ]]>
+    </string>
+    <string name="label_state">Состояние:</string>
+    <string name="label_data">Данные:</string>
+    <string name="label_device_address">Адрес устройства:</string>
+    <string name="menu_connect">Соединить</string>
+    <string name="menu_disconnect">Отключить</string>
+    <string name="unknown_service">Неизвестный сервис</string>
+    <string name="unknown_characteristic">Неизвестная характеристика</string>
+    <string name="searching_ble">Поиск...</string>
+    <string name="ble_not_found">Не найдено</string>
+    <string name="ble_founded">Найдено %d устройств</string>
+    <!-- Preference Titles -->
+    <string name="account_header">Аккаунт</string>
+    <string name="hostname_title">Имя хоста</string>
+    <string name="username_title">Имя пользователя</string>
+    <string name="password_title">Пароль</string>
+    <string name="device_name_title">Имя устройства</string>
+    <string name="ssid_title">WiFi SSID</string>
+    <string name="ssid_password_title">WiFi пароль</string>
+
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="rest_error">REST код ошибки (%d) - %s</string>
+    <string name="alert_edit_config">Не могу соединиться с сервером. Проверьте настройки пользователя. Открыть настройки?</string>
+    <string name="alert_refused_connection">Соединение прервано</string>
+    <string name="no_details">нет подробностей</string>
+    <string name="details_prefix">\n\nПодробности:\n</string>
+    <string name="disconnect_user">Отсоединить пользователя</string>
+    <string name="disconnect_request">Вы ходите отключить пользователя от сервера?</string>
+    <string name="default_from_account">Установить как в настройках аккаунта</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="next">Далее</string>
+    <string name="previous">Предыдущий</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="enter_command">Введите команду</string>
+    <string name="send">Отправка</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="channel_description">To show new messages and media records</string>
+    <string name="skip">Сброс</string>
+    <string name="new_messages">Новые сообщения</string>
+    <string name="messages_from">%d сообщений от %s</string>
+    <string name="messages_from_devices">%d сообщений от %d устройств(а)</string>
+    <string name="err_connect_to_server">Не могу подключиться к серверу</string>
+    <string name="err_connect_message">Ошибка сети или некорректная кофигурация. %s</string>
+    <string name="err_wrong_config_message">Некорректная конфигурация. %s</string>
+    <string name="media_captured">Захват медиа</string>
+    <string name="default_ssid">Текущий ssid</string>
+    <string name="choose_ssid">Выбор ssid</string>
+</resources>

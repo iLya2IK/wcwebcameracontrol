@@ -1,29 +1,24 @@
 package com.sggdev.wcwebcameracontrol;
 
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_HOST_NAME;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_IMAGE_BITMAP;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
-import android.graphics.Paint;
 import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.jsibbold.zoomage.ZoomageView;
-import com.sggdev.wcwebcameracontrol.databinding.ActivityImageViewFullscreenBinding;
+import com.sggdev.wcsdk.WCHTTPClient;
+import com.sggdev.wcsdk.WCHTTPClientHolder;
+import com.sggdev.wcsdk.WCHTTPStreamFrame;
 import com.sggdev.wcwebcameracontrol.databinding.ActivityStreamFullscreenBinding;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -153,7 +148,6 @@ public class StreamFullscreenActivity extends AppCompatActivity {
         }
         catch (Exception e) {
             e.printStackTrace();
-            b = null;
         }
         finally {
             refreshDrawable(b);
@@ -164,18 +158,15 @@ public class StreamFullscreenActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            StreamFullscreenActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    WCHTTPClient httpClient = WCHTTPClientHolder.getInstance(StreamFullscreenActivity.this);
-                    WCHTTPStreamFrame fr = httpClient.popFrame();
-                    if (fr != null) {
-                        StreamFullscreenActivity.this.updateDrawable(fr.getData());
-                    }
+            StreamFullscreenActivity.this.runOnUiThread(() -> {
+                WCHTTPClient httpClient = WCHTTPClientHolder.getInstance(StreamFullscreenActivity.this);
+                WCHTTPStreamFrame fr = httpClient.popFrame();
+                if (fr != null) {
+                    StreamFullscreenActivity.this.updateDrawable(fr.getData());
                 }
             });
         }
-    };
+    }
 
     @Override
     protected void onResume() {

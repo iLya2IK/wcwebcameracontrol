@@ -61,10 +61,12 @@ import static android.Manifest.permission.INTERNET;
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.makeMeasureSpec;
 
-import static com.sggdev.wcwebcameracontrol.BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM;
-import static com.sggdev.wcwebcameracontrol.BLEDeviceVariant.DEVICE_VARIANT_DEVICE;
-import static com.sggdev.wcwebcameracontrol.BLEDeviceVariant.DEVICE_VARIANT_SERVER_ITEM;
-import static com.sggdev.wcwebcameracontrol.DeviceItem.DEFAULT_DEVICE_COLOR;
+import com.sggdev.wcsdk.*;
+
+import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM;
+import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_DEVICE;
+import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_SERVER_ITEM;
+import static com.sggdev.wcsdk.DeviceItem.DEFAULT_DEVICE_COLOR;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_ADDRESS;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
@@ -74,12 +76,12 @@ import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_LST_SYNC;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
-import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_CONNECTED;
-import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED;
-import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED_BY_USER;
-import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_DISCONNECTED_RETRY_OVER;
-import static com.sggdev.wcwebcameracontrol.WCHTTPClient.CS_USER_CFG_INCORRECT;
-import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.*;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_CONNECTED;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_BY_USER;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_RETRY_OVER;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_USER_CFG_INCORRECT;
+import static com.sggdev.wcsdk.WCRESTProtocol.*;
 
 public class MainActivity extends AppCompatActivity {
     private static final int STATE_DEVICE_LISTING = 0;
@@ -87,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int STATE_DEVICE_CHAT = 2;
     private static final int STATE_MAIN_CONFIG = 3;
     private WCApp myApp;
-    private WCApp.DevicesHolderList DevList() { return  myApp.mDeviceItems; }
+    private WCAppCommon.DevicesHolderList DevList() { return  myApp.getDevicesHolderList(); }
 
     public static final String ACTION_LAUNCH_CHAT = "ACTION_LAUNCH_CHAT";
     public static final String ACTION_LAUNCH_CONFIG = "ACTION_LAUNCH_CONFIG";
@@ -110,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
     private int bleScannerState = BS_SHUTDOWN;
 
     private int httpServerCooldown = 0;
-    private int dbCooldown = 0;
 
     private int ACTIVITY_STATE = STATE_DEVICE_LISTING;
     private Timer syntimer;
@@ -162,10 +163,10 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             if (mAvailableDevices.size() > 0) {
                 WCHTTPResync.Builder sync = new WCHTTPResync.Builder(myApp, null);
-                sync.addNotifyListener()
+                sync.addOnFinishListener(myApp.getOnSyncNotify())
                         .addOnFinishListener(new WCHTTPResync.OnSyncFinished() {
                             @Override
-                            public boolean onNewMessagesSummary(Context context, int totalAmount, List<WCChat.DeviceMsgsCnt> aList) {
+                            public boolean onNewMessagesSummary(Context context, int totalAmount, String lstSync, List<WCChat.DeviceMsgsCnt> aList) {
                                 mAvailableDevices.lock();
                                 try {
                                     for (BLEDeviceVariant deviceVariant : mAvailableDevices)
@@ -173,17 +174,17 @@ public class MainActivity extends AppCompatActivity {
                                             if (totalAmount > 0) {
                                                 boolean not_found = true;
                                                 for (WCChat.DeviceMsgsCnt devCnt : aList) {
-                                                    if (deviceVariant.item.getDbId() == devCnt.getDbId() ||
-                                                            deviceVariant.item.getDeviceServerName().equals(devCnt.getName())) {
-                                                        deviceVariant.item.setUnreadedMsgs(devCnt.getCnt());
+                                                    if (deviceVariant.getItem().getDbId() == devCnt.getDbId() ||
+                                                            deviceVariant.getItem().getDeviceServerName().equals(devCnt.getName())) {
+                                                        deviceVariant.getItem().setUnreadedMsgs(devCnt.getCnt());
                                                         not_found = false;
                                                         break;
                                                     }
                                                 }
                                                 if (not_found)
-                                                    deviceVariant.item.setUnreadedMsgs(0);
+                                                    deviceVariant.getItem().setUnreadedMsgs(0);
                                             } else
-                                                deviceVariant.item.setUnreadedMsgs(0);
+                                                deviceVariant.getItem().setUnreadedMsgs(0);
                                         }
                                 } finally {
                                     mAvailableDevices.unlock();
@@ -193,6 +194,10 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onNewMessages(Context context, List<WCChat.ChatMessage> aList, List<String> aDevices) {
+                            }
+
+                            @Override
+                            public void onNoMessages(Context context) {
                             }
 
                             @Override
@@ -213,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     for (BLEDeviceVariant bd : mAvailableDevices)
                         if (bd.isServerCompleteDevice())
-                            DevList().saveItem(bd.item);
+                            DevList().saveItem(bd.getItem());
                 } finally {
                     mAvailableDevices.unlock();
                     DevList().endUpdate();
@@ -256,6 +261,8 @@ public class MainActivity extends AppCompatActivity {
                     httpClient.recvMsgs(MainActivity.this, false);
                     httpClient.recvSnaps(MainActivity.this);
 
+                    myApp.syncTimeWithServer(httpClient);
+
                     httpClient.startScanning(MainActivity.this,
                             (resultCode, resultMsg) -> {
                                 Object res = resultMsg.opt(JSON_DEVICES);
@@ -264,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
                                 try {
                                     for (BLEDeviceVariant deviceVariant : mAvailableDevices)
                                         if (deviceVariant.isServerCompleteDevice())
-                                            deviceVariant.item.setOnline(false);
+                                            deviceVariant.getItem().setOnline(false);
                                 } finally {
                                     mAvailableDevices.unlock();
                                 }
@@ -440,6 +447,14 @@ public class MainActivity extends AppCompatActivity {
                 mAvailableDevices.remove(position);
                 doRefreshAvailableDevices();
                 mListMod = true;
+            } else {
+                if (aitem.isBLECompleteDevice()) {
+                    final DeviceItem adevice = aitem.getItem();
+                    if (!adevice.isBLEConnected()) {
+                        launchDeviceConfig(adevice);
+                        mListMod = true;
+                    }
+                }
             }
             return false;
         });
@@ -451,15 +466,15 @@ public class MainActivity extends AppCompatActivity {
             }
             Object o = mListView.getItemAtPosition(position);
             BLEDeviceVariant aitem = (BLEDeviceVariant) o;
-            switch (aitem.variant) {
+            switch (aitem.getVariant()) {
                 case DEVICE_VARIANT_DEVICE:
                 case DEVICE_VARIANT_SERVER_ITEM: {
-                    DeviceItem adevice = aitem.item;
+                    DeviceItem adevice = aitem.getItem();
                     launchDeviceChat(adevice);
                     break;
                 }
                 case DEVICE_VARIANT_BLE_ITEM: {
-                    final DeviceItem adevice = aitem.item;
+                    final DeviceItem adevice = aitem.getItem();
                     if (!adevice.isBLEConnected())
                         launchDeviceConfig(adevice);
                     break;
@@ -519,7 +534,7 @@ public class MainActivity extends AppCompatActivity {
         final Intent intent = getIntent();
         String chatToLaunch = intent.getStringExtra(ACTION_LAUNCH_CHAT);
         if ((chatToLaunch != null) && (chatToLaunch.length() > 0)) {
-            final DeviceItem dev = myApp.mDeviceItems.findItem(chatToLaunch);
+            final DeviceItem dev = myApp.getDevicesHolderList().findItem(myApp.getHttpCfgFullUserName(), chatToLaunch);
             if (dev != null) {
                 new Handler().postDelayed(() -> runOnUiThread(() -> launchDeviceChat(dev)), 1000);
             }
@@ -557,7 +572,7 @@ public class MainActivity extends AppCompatActivity {
         final Intent intent = new Intent(MainActivity.this, DeviceChatActivity.class);
         long userDbId = -1;
         String cfgDev = myApp.getHttpCfgDevice();
-        DeviceItem userDevice = DevList().findItem(cfgDev);
+        DeviceItem userDevice = DevList().findItem(myApp.getHttpCfgFullUserName(), cfgDev);
         if (userDevice != null) {
             userDbId = userDevice.getDbId();
         }
@@ -688,7 +703,7 @@ public class MainActivity extends AppCompatActivity {
                 DeviceItem di = null;
 
                 if (deviceHostName.length() > 0)
-                    di = DevList().findItem(deviceHostName);
+                    di = DevList().findItem(myApp.getHttpCfgFullUserName(), deviceHostName);
 
                 DevList().beginUpdate();
                 try {
@@ -713,7 +728,7 @@ public class MainActivity extends AppCompatActivity {
                 int deviceIndex = data.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
                 String lstSync = data.getStringExtra(EXTRAS_DEVICE_LST_SYNC);
 
-                DeviceItem di = DevList().findItem(deviceHostName);
+                DeviceItem di = DevList().findItem(myApp.getHttpCfgFullUserName(), deviceHostName);
 
                 DevList().beginUpdate();
                 try {
@@ -771,7 +786,7 @@ public class MainActivity extends AppCompatActivity {
                 return convertView;
             }
 
-            if (ble.variant == BLEDeviceVariant.DEVICE_VARIANT_SEPARATOR) {
+            if (ble.getVariant() == BLEDeviceVariant.DEVICE_VARIANT_SEPARATOR) {
                 if (convertView == null) {
                     convertView = LayoutInflater.from(getContext())
                             .inflate(R.layout.separator_item, null);
@@ -799,23 +814,23 @@ public class MainActivity extends AppCompatActivity {
             String aName = "", aText2 = "";
             Drawable aDevicePic = null, aSecondaryPic = null, aPresencePic = null;
 
-            switch (ble.variant) {
+            switch (ble.getVariant()) {
                 case DEVICE_VARIANT_BLE_ITEM: {
-                    aName = ble.item.getDeviceBLEName();
-                    aText2 = ble.item.getDeviceBLEAddress();
-                    aDevicePic = ContextCompat.getDrawable(MainActivity.this, ble.item.getDevicePictureID());
-                    aSecondaryPic = new DeviceIconID(ble.item.getDeviceItemColor(), ble.item.getDeviceItemIndex());
+                    aName = ble.getItem().getDeviceBLEName();
+                    aText2 = ble.getItem().getDeviceBLEAddress();
+                    aDevicePic = ContextCompat.getDrawable(MainActivity.this, ble.getItem().getDevicePictureID());
+                    aSecondaryPic = new DeviceIconID(ble.getItem().getDeviceItemColor(), ble.getItem().getDeviceItemIndex());
                     break;
                 }
                 case DEVICE_VARIANT_DEVICE:
                 case DEVICE_VARIANT_SERVER_ITEM: {
                     int resID = 0;
 
-                    aName = ble.item.getDeviceServerName();
+                    aName = ble.getItem().getDeviceServerName();
                     if (aName == null || aName.length() == 0)
-                        aName = ble.item.getDeviceBLEAddress();
+                        aName = ble.getItem().getDeviceBLEAddress();
                     if (aName == null) aName = "";
-                    aText2 = ble.item.getDeviceBLEName();
+                    aText2 = ble.getItem().getDeviceBLEName();
                     if (aText2 == null) aText2 = "";
                     if (aText2.length() > 0)
                         resID = getApplicationContext().getResources().
@@ -827,14 +842,14 @@ public class MainActivity extends AppCompatActivity {
                     else
                         aText2 = "";
 
-                    resID =  ble.item.getDevicePictureID();
+                    resID =  ble.getItem().getDevicePictureID();
                     if (resID != 0) {
                         aDevicePic = ContextCompat.getDrawable(MainActivity.this,resID);
-                        aSecondaryPic = new DeviceIconID(ble.item.getDeviceItemColor(),
-                                ble.item.getDeviceItemIndex());
+                        aSecondaryPic = new DeviceIconID(ble.getItem().getDeviceItemColor(),
+                                ble.getItem().getDeviceItemIndex());
                     }
 
-                    if (ble.item.isOnline())
+                    if (ble.getItem().isOnline())
                         aPresencePic = ContextCompat.getDrawable(MainActivity.this,android.R.drawable.presence_online);
                     else
                         aPresencePic = ContextCompat.getDrawable(MainActivity.this,android.R.drawable.presence_offline);
@@ -851,9 +866,9 @@ public class MainActivity extends AppCompatActivity {
             ImageView img_presence = convertView.findViewById(R.id.icon_presence);
             ImageView img_cfg = convertView.findViewById(R.id.icon_cfg);
 
-            if (ble.item.getUnreadedMsgs() > 0) {
+            if (ble.getItem().getUnreadedMsgs() > 0) {
                 msg_cnt.setVisibility(View.VISIBLE);
-                msg_cnt.setText(String.format("%d", ble.item.getUnreadedMsgs()));
+                msg_cnt.setText(String.format("%d", ble.getItem().getUnreadedMsgs()));
             } else
                 msg_cnt.setVisibility(View.GONE);
 
@@ -887,7 +902,7 @@ public class MainActivity extends AppCompatActivity {
                 img_presence.setImageDrawable(aPresencePic);
 
             if (!ble.isSeparator() && img_cfg != null) {
-                if (ble.item.isBLEAvaible())
+                if (ble.getItem().isBLEAvaible())
                     img_cfg.setVisibility(View.VISIBLE);
                 else
                     img_cfg.setVisibility(View.GONE);
@@ -1027,7 +1042,7 @@ public class MainActivity extends AppCompatActivity {
             lock();
             try {
                 for (int i = size()-1; i >=0; i--) {
-                    if ((get(i).variant & mask) > 0)
+                    if ((get(i).getVariant() & mask) > 0)
                         remove(i);
                 }
             } finally {
@@ -1070,11 +1085,12 @@ public class MainActivity extends AppCompatActivity {
 
                 for (BLEDeviceVariant bd : mAvailableDevices)
                     if (bd.isServerCompleteDevice())
-                        if (bd.item.getDeviceServerName().equals(item)) {
-                            bd.item.setOnline(true);
-                            return bd.item;
+                        if (bd.getItem().getDeviceServerName().equals(item)) {
+                            bd.getItem().setOnline(true);
+                            return bd.getItem();
                         }
-                DeviceItem di = new DeviceItem(getApplicationContext());
+                DeviceItem di = new DeviceItem(getApplicationContext(),
+                                                myApp.getHttpCfgFullUserName());
                 di.setOnline(true);
                 DevList().completeItem(di, item);
                 add(new BLEDeviceVariant(di));
@@ -1105,12 +1121,13 @@ public class MainActivity extends AppCompatActivity {
                 String bleaddress = bleDevice.getAddress();
                 for (BLEDeviceVariant bd : mAvailableDevices)
                     if (bd.isBLECompleteDevice())
-                        if (bd.item.getDeviceBLEAddress().equals(bleaddress)) {
-                            bd.item.setBLEDevice(bleDevice);
+                        if (bd.getItem().getDeviceBLEAddress().equals(bleaddress)) {
+                            bd.getItem().setBLEDevice(bleDevice);
                             bd.update();
                             return;
                         }
-                DeviceItem di = new DeviceItem(getApplicationContext());
+                DeviceItem di = new DeviceItem(getApplicationContext(),
+                                                 myApp.getHttpCfgFullUserName());
                 di.setBLEDevice(bleDevice);
                 DevList().completeItem(di, bleDevice.getName(), bleDevice.getAddress());
                 add(new BLEDeviceVariant(di));
@@ -1124,28 +1141,28 @@ public class MainActivity extends AppCompatActivity {
             try {
                 for (BLEDeviceVariant bd : mAvailableDevices)
                 {
-                    switch (bd.variant) {
+                    switch (bd.getVariant()) {
                         case DEVICE_VARIANT_DEVICE:
                         case DEVICE_VARIANT_BLE_ITEM:{
-                            if (bd.item.getDeviceBLEAddress().equals(bleAddr)) {
-                                DevList().completeItem(bd.item, srvName);
+                            if (bd.getItem().getDeviceBLEAddress().equals(bleAddr)) {
+                                DevList().completeItem(bd.getItem(), srvName);
                                 bd.update();
-                                return bd.item;
+                                return bd.getItem();
                             }
                             break;
                         }
                         case DEVICE_VARIANT_SERVER_ITEM:{
-                            if (bd.item.getDeviceServerName().equals(srvName)) {
-                                DevList().completeItem(bd.item, bleName, bleAddr);
+                            if (bd.getItem().getDeviceServerName().equals(srvName)) {
+                                DevList().completeItem(bd.getItem(), bleName, bleAddr);
                                 bd.update();
-                                return bd.item;
+                                return bd.getItem();
                             }
                             break;
                         }
                     }
                 }
                 setHasServerDevices();
-                DeviceItem di = new DeviceItem(getApplicationContext());
+                DeviceItem di = new DeviceItem(getApplicationContext(), myApp.getHttpCfgFullUserName());
                 DevList().completeItem(di, srvName, bleName, bleAddr);
                 BLEDeviceVariant res = new BLEDeviceVariant(di);
                 add(res);

@@ -3,10 +3,10 @@ package com.sggdev.wcwebcameracontrol;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
-import static com.sggdev.wcwebcameracontrol.ChatDatabase.MEDIA_LOC;
-import static com.sggdev.wcwebcameracontrol.ChatDatabase.MSG_STATE_READY_TO_SEND;
-import static com.sggdev.wcwebcameracontrol.ChatDatabase.MSG_STATE_SENDED;
-import static com.sggdev.wcwebcameracontrol.DeviceItem.DEFAULT_DEVICE_COLOR;
+import static com.sggdev.wcsdk.ChatDatabase.MEDIA_LOC;
+import static com.sggdev.wcsdk.ChatDatabase.MSG_STATE_READY_TO_SEND;
+import static com.sggdev.wcsdk.ChatDatabase.MSG_STATE_SENDED;
+import static com.sggdev.wcsdk.DeviceItem.DEFAULT_DEVICE_COLOR;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_ADDRESS;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
@@ -18,7 +18,7 @@ import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_IMAGE_BITMAP;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
 import static com.sggdev.wcwebcameracontrol.WCPicPreviewHelper.MIN_PIC_SIZE_DPI;
-import static com.sggdev.wcwebcameracontrol.WCRESTProtocol.REST_RESULT_OK;
+import static com.sggdev.wcsdk.WCRESTProtocol.REST_RESULT_OK;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -65,6 +65,8 @@ import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
+
+import com.sggdev.wcsdk.*;
 
 public class DeviceChatActivity extends Activity {
 
@@ -234,14 +236,14 @@ public class DeviceChatActivity extends Activity {
         int mDeviceIndex = intent.getIntExtra(EXTRAS_DEVICE_INDEX, 0);
 
         if (mTargetDeviceId > 0) {
-            mTargetDevice = myApp.mDeviceItems.findItem(mTargetDeviceId);
+            mTargetDevice = myApp.getDevicesHolderList().findItem(mTargetDeviceId);
         } else {
-            DeviceItem it = new DeviceItem(myApp);
+            DeviceItem it = new DeviceItem(myApp, myApp.getHttpCfgFullUserName());
             it.complete(mDeviceHostName, mDeviceName, mDeviceAddress);
-            mTargetDevice = myApp.mDeviceItems.findItem(it);
+            mTargetDevice = myApp.getDevicesHolderList().findItem(it);
             if (mTargetDevice == null) mTargetDevice = it;
         }
-        mUserDevice = myApp.mDeviceItems.findItem(mUserDeviceId);
+        mUserDevice = myApp.getDevicesHolderList().findItem(mUserDeviceId);
 
         mMessageList = new ArrayList<>();
 
@@ -385,7 +387,7 @@ public class DeviceChatActivity extends Activity {
             if (msgToSend.length() > 0) {
                 ChatDatabase db = ChatDatabase.getInstance(DeviceChatActivity.this);
 
-                db.sendMsg(mUserDevice, mTargetDevice, mMsgToSend.getText().toString(), jsonParams);
+                db.sendMsg(mUserDevice, mTargetDevice, mMsgToSend.getText().toString(), jsonParams, WCUtils.serverTimeStamp());
 
                 mMsgToSend.setText("");
 
@@ -496,15 +498,12 @@ public class DeviceChatActivity extends Activity {
 
         mPlayStream.setVisibility(GONE);
 
-        mPlayStream.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final Intent data = new Intent(DeviceChatActivity.this,
-                        StreamFullscreenActivity.class);
+        mPlayStream.setOnClickListener(view -> {
+            final Intent data = new Intent(DeviceChatActivity.this,
+                    StreamFullscreenActivity.class);
 
-                data.putExtra(EXTRAS_DEVICE_HOST_NAME, mDeviceHostName);
-                startActivity(data);
-            }
+            data.putExtra(EXTRAS_DEVICE_HOST_NAME, mDeviceHostName);
+            startActivity(data);
         });
 
         loadMessageList();
@@ -643,6 +642,7 @@ public class DeviceChatActivity extends Activity {
 
     private void startSendUnsentMsgs() {
         WCHTTPClient httpClient = WCHTTPClientHolder.getInstance(DeviceChatActivity.this);
+        httpClient.getServerTime(DeviceChatActivity.this, null);
         httpClient.sendMsgs(DeviceChatActivity.this,
                 mUserDevice,
                 MAX_MSGS_TO_SEND_CHUNCK,
@@ -677,7 +677,8 @@ public class DeviceChatActivity extends Activity {
 
     private void doIdle() {
         WCHTTPResync.Builder sync = new WCHTTPResync.Builder(this, null);
-        sync.addNotifyListener().excludeDevice(mTargetDevice.getDeviceServerName()).doResync();
+        sync.addOnFinishListener(((WCApp) getApplication()).getOnSyncNotify())
+                .excludeDevice(mTargetDevice.getDeviceServerName()).doResync();
     }
 
     private void doRoll() {
