@@ -26,7 +26,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.util.Log;
+import com.sggdev.wcsdk.Log;
 import android.util.Pair;
 
 import androidx.annotation.Nullable;
@@ -350,7 +350,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
 
             return res;
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get media from database");
+            Log.e(TAG, "Error while trying to get media from database");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -394,7 +394,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to update timestamp for device");
+            Log.e(TAG, "Error while trying to update timestamp for device");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -474,9 +474,10 @@ public class ChatDatabase extends SQLiteOpenHelper {
                     db.insertOrThrow(TABLE_DEVICES, null, values);
 
                     deviceId = stmt_get_last_device.simpleQueryForLong();
+                    db.setTransactionSuccessful();
                 }
             } catch (Exception e) {
-                Log.d(TAG, "Error while trying to add or update device");
+                Log.e(TAG, "Error while trying to add or update device");
                 e.printStackTrace();
             } finally {
                 db.endTransaction();
@@ -525,7 +526,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 } while(cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get devices from database");
+            Log.e(TAG, "Error while trying to get devices from database");
+            e.printStackTrace();
         } finally {
             if (cursor != null && !cursor.isClosed()) {
                 cursor.close();
@@ -635,7 +637,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
         } catch (Exception e) {
             lst = "";
-            Log.d(TAG, "Error while trying to add messages");
+            Log.e(TAG, "Error while trying to add messages");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -658,7 +660,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                     whereArgs.toArray(new String[]{}));
             db.setTransactionSuccessful();
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to update media record");
+            Log.e(TAG, "Error while trying to update media record");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -679,7 +681,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                     whereArgs.toArray(new String[]{}));
             db.setTransactionSuccessful();
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to update media record");
+            Log.e(TAG, "Error while trying to update media record");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -695,7 +697,8 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 media.setPreview(cursor.getBlob(0));
             }
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get blob from database");
+            Log.e(TAG, "Error while trying to get blob from database");
+            e.printStackTrace();
         } finally {
             if (cursor != null && !cursor.isClosed()) {
                 cursor.close();
@@ -738,7 +741,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
         try {
             db.execSQL(sb.toString());
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to update media");
+            Log.e(TAG, "Error while trying to update media");
             e.printStackTrace();
         }
     }
@@ -765,7 +768,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
             db.setTransactionSuccessful(); // This commits the transaction if there were no exceptions
 
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to add media records");
+            Log.e(TAG, "Error while trying to add media records");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -823,7 +826,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
             return aMediaList;
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get media from database");
+            Log.e(TAG, "Error while trying to get media from database");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -868,7 +871,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 } while(cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get unsent messages from database");
+            Log.e(TAG, "Error while trying to get unsent messages from database");
             e.printStackTrace();
         } finally {
             if (cursor != null && !cursor.isClosed()) {
@@ -897,7 +900,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
             }
             db.setTransactionSuccessful();
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to update messages");
+            Log.e(TAG, "Error while trying to update messages");
             e.printStackTrace();
         } finally {
             db.endTransaction();
@@ -953,7 +956,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 } while(cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to check new messages from database");
+            Log.e(TAG, "Error while trying to check new messages from database");
             e.printStackTrace();
         } finally {
             if (cursor != null && !cursor.isClosed()) {
@@ -977,7 +980,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful(); // This commits the transaction if there were no exceptions
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get last timestamp from database");
+            Log.e(TAG, "Error while trying to get last timestamp from database");
             e.printStackTrace();
             lstStamp = "";
         } finally {
@@ -1020,7 +1023,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 } while(cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get count of new messages from database");
+            Log.e(TAG, "Error while trying to get count of new messages from database");
             e.printStackTrace();
         } finally {
             if (cursor != null && !cursor.isClosed()) {
@@ -1078,7 +1081,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 } while(cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get new messages from database");
+            Log.e(TAG, "Error while trying to get new messages from database");
             e.printStackTrace();
         } finally {
             if (cursor != null && !cursor.isClosed()) {
@@ -1134,7 +1137,7 @@ public class ChatDatabase extends SQLiteOpenHelper {
                 } while(cursor.moveToNext());
             }
         } catch (Exception e) {
-            Log.d(TAG, "Error while trying to get all msgs from database");
+            Log.e(TAG, "Error while trying to get all msgs from database");
             e.printStackTrace();
         } finally {
             if (cursor != null && !cursor.isClosed()) {

@@ -28,7 +28,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
-import android.util.Log;
+import com.sggdev.wcsdk.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Display;

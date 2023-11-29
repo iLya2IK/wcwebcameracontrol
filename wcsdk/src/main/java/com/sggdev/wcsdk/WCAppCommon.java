@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -38,7 +40,7 @@ public class WCAppCommon extends Application implements  androidx.work.Configura
     @Override
     public androidx.work.Configuration getWorkManagerConfiguration() {
         return new androidx.work.Configuration.Builder()
-                .setMinimumLoggingLevel(android.util.Log.INFO)
+                .setMinimumLoggingLevel(Log.INFO)
                 .build();
     }
 
@@ -302,6 +304,8 @@ public class WCAppCommon extends Application implements  androidx.work.Configura
 
     public DevicesHolderList getDevicesHolderList() {return  mDeviceItems;}
 
+    public static char[] getSSKW() {return SSKW;}
+
     private static final char[] SSKW = {'s','o','m','e','S','e','c','r','e','t','K','e','y'};
     public static final String PREF_USER_PREFS  = "USER_PREFS";
     public static final String PREF_HTTP_CFG_URL  = "PREF_HTTP_CFG_URL";
@@ -317,7 +321,7 @@ public class WCAppCommon extends Application implements  androidx.work.Configura
         try {
             final byte[] bytes = value!=null ? value.getBytes(StandardCharsets.UTF_8) : new byte[0];
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(SSKW));
+            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(getSSKW()));
             Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
             pbeCipher.init(Cipher.ENCRYPT_MODE, key,
                     new PBEParameterSpec(Settings.Secure.getString(getContentResolver(),
@@ -335,7 +339,7 @@ public class WCAppCommon extends Application implements  androidx.work.Configura
         try {
             final byte[] bytes = value!=null ? Base64.decode(value,Base64.DEFAULT) : new byte[0];
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(SSKW));
+            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(getSSKW()));
             Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
             pbeCipher.init(Cipher.DECRYPT_MODE, key,
                     new PBEParameterSpec(Settings.Secure.getString(getContentResolver(),
@@ -352,7 +356,8 @@ public class WCAppCommon extends Application implements  androidx.work.Configura
         String res = sp.getString(pref, null);
         if (res != null) {
             res = decrypt(res);
-        }
+        } else
+            res = "";
         return res;
     }
 
@@ -425,15 +430,22 @@ public class WCAppCommon extends Application implements  androidx.work.Configura
         setPref(PREF_HTTP_CFG_SID, value);
     }
 
+    private Boolean isNetworkAvailable(Application application) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Network nw = connectivityManager.getActiveNetwork();
+        if (nw == null) return false;
+        NetworkCapabilities actNw = connectivityManager.getNetworkCapabilities(nw);
+        return actNw != null && (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
+                actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
+    }
+
     public String getCurrentSsid() {
         String ssid = null;
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-        if (networkInfo == null) {
-            return null;
-        }
 
-        if (networkInfo.isConnected()) {
+        if (isNetworkAvailable(this)) {
             final WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
             final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
             if (connectionInfo != null && (connectionInfo.getSSID().length() > 0)) {

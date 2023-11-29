@@ -44,7 +44,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
+import com.sggdev.wcsdk.Log;
 
 import androidx.annotation.NonNull;
 
@@ -118,6 +118,8 @@ public class WCHTTPClient {
     public static int getLastAddedMsgsCnt() {
         return mLastAddedMsgsCnt;
     }
+
+    private final static String TAG = "WCHTTPClient";
 
     WCHTTPClient(Context context) {
         mContext = context;
@@ -287,7 +289,7 @@ public class WCHTTPClient {
                     if (resultCode == REST_RESULT_OK) {
                         Object res = resultMsg.opt(JSON_STAMP);
                         if (res instanceof String) {
-                            Log.d(this.getClass().getCanonicalName(), String.format("serverTime incoming %s", ((String)res)));
+                            Log.d(TAG, String.format("serverTime incoming %s", ((String)res)));
                             WCUtils.setServerTimeStamp((String)res);
                         }
                     }
@@ -484,7 +486,7 @@ public class WCHTTPClient {
                 }
                 obj.put(JSON_SHASH, cfg.getSID());
 
-                Log.d(this.getClass().getCanonicalName(), String.format("sended %s", obj.toString()));
+                Log.d(TAG, String.format("sended %s", obj.toString()));
 
                 WCRESTTask wc_task = new WCRESTTask(this, caller);
                 wc_task.setOnJSONResponseListener((resultCode, resultMsg) -> {
@@ -641,12 +643,12 @@ public class WCHTTPClient {
     public WCRESTTask recvMsgsPrepare(Activity caller, boolean doSync) {
         mLastAddedMsgsCnt = 0;
 
-        Log.d(this.getClass().getCanonicalName(), String.format("recvMsgsPrepare httpClientState = %d", httpClientState));
+        Log.d(TAG, String.format("recvMsgsPrepare httpClientState = %d", httpClientState));
         if (httpClientState != CS_CONNECTED) return null;
 
         try {
-            Log.d(this.getClass().getCanonicalName(), String.format("recvMsgsPrepare cfg.getSID %s", cfg.getSID()));
-            Log.d(this.getClass().getCanonicalName(), String.format("recvMsgsPrepare cfg.getLastMsgStamp %s", cfg.getLastMsgStamp()));
+            Log.d(TAG, String.format("recvMsgsPrepare cfg.getSID %s", cfg.getSID()));
+            Log.d(TAG, String.format("recvMsgsPrepare cfg.getLastMsgStamp %s", cfg.getLastMsgStamp()));
 
             JSONObject obj = new JSONObject();
             obj.put(JSON_SHASH, cfg.getSID());

@@ -11,7 +11,7 @@ import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.PowerManager;
-import android.util.Log;
+import com.sggdev.wcsdk.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;

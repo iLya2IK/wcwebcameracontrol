@@ -20,7 +20,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.util.Log;
+import com.sggdev.wcsdk.Log;
 import android.view.ContextThemeWrapper;
 import android.widget.RemoteViews;
 
@@ -67,13 +67,8 @@ public class WCApp extends WCAppCommon {
         private PendingIntent createOnDismissedIntent(Context context, int aNotificationId) {
             Intent skipIntent = new Intent(context, WCNotificationDismissedReceiver.class);
             skipIntent.setAction(WCNotificationDismissedReceiver.WC_SKIP);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                return PendingIntent.getBroadcast(context, 0, skipIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-            } else {
-                return PendingIntent.getBroadcast(context, 0, skipIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
-            }
+            return PendingIntent.getBroadcast(context, 0, skipIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         }
 
         private NotificationCompat.Builder initNotification(Context context, int notId, Intent intent) {
@@ -106,7 +101,7 @@ public class WCApp extends WCAppCommon {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP |
                         Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 builder.setContentIntent(pendingIntent);
             }
             return builder;

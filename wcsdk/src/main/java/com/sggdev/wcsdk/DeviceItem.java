@@ -56,6 +56,7 @@ public class DeviceItem implements Comparable<DeviceItem> {
 
     boolean isSame(DeviceItem it) {
         return ((device == it.device) &&
+                (mDBID == it.getDbId()) &&
                 (mUserName.equals(it.mUserName)) &&
                 (mServerName.equals(it.mServerName))&&
                 (bleAddress.equals(it.bleAddress))&&
@@ -126,8 +127,9 @@ public class DeviceItem implements Comparable<DeviceItem> {
                                String deviceServerName,
                                String deviceBLEName,
                                String deviceBLEAddress) {
-        if ((an_device.bleAddress.equals(deviceBLEAddress) && (deviceBLEAddress.length() > 0)) ||
-                (an_device.mServerName.equals(deviceServerName) && (deviceServerName.length() > 0))) {
+        if (an_device.mUserName.equals(mUserName) && (
+                (an_device.bleAddress.equals(deviceBLEAddress) && (deviceBLEAddress.length() > 0)) ||
+                (an_device.mServerName.equals(deviceServerName) && (deviceServerName.length() > 0)))) {
             if (deviceServerName.length() > 0)
                 mServerName = deviceServerName;
             if (deviceBLEAddress.length() > 0)
