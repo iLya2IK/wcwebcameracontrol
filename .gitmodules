@@ -1,0 +1,3 @@
+[submodule "wcsdk"]
+	path = wcsdk
+	url = git@github.com:iLya2IK/wcsdk_android.git
