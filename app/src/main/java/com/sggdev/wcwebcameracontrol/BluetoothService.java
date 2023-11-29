@@ -1,5 +1,6 @@
 package com.sggdev.wcwebcameracontrol;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -91,6 +92,7 @@ public class BluetoothService extends Service {
             }
         }
 
+        @SuppressLint("MissingPermission")
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
@@ -244,6 +246,7 @@ public class BluetoothService extends Service {
         return mNotificationCharacteristics;
     }
 
+    @SuppressLint("MissingPermission")
     public void readDescriptor(String uuid, UUID clientCharacteristicConfig) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -325,6 +328,7 @@ public class BluetoothService extends Service {
      *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      *         callback.
      */
+    @SuppressLint("MissingPermission")
     public int connect(final String address) {
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
@@ -371,6 +375,7 @@ public class BluetoothService extends Service {
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
      */
+    @SuppressLint("MissingPermission")
     public void disconnect() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -390,6 +395,7 @@ public class BluetoothService extends Service {
      * After using a given BLE device, the app must call this method to ensure resources are
      * released properly.
      */
+    @SuppressLint("MissingPermission")
     public void close() {
         if (mBluetoothGatt == null) {
             return;
@@ -408,6 +414,7 @@ public class BluetoothService extends Service {
      *
      * @param characteristic The characteristic to read from.
      */
+    @SuppressLint("MissingPermission")
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -423,6 +430,7 @@ public class BluetoothService extends Service {
         mBluetoothGatt.readCharacteristic(characteristic);
     }
 
+    @SuppressLint("MissingPermission")
     public void sendData(String data) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -433,6 +441,7 @@ public class BluetoothService extends Service {
         mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
     }
 
+    @SuppressLint("MissingPermission")
     public void writeCharacteristic() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -441,6 +450,7 @@ public class BluetoothService extends Service {
         mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
     }
 
+    @SuppressLint("MissingPermission")
     public void writeDescriptor(BluetoothGattDescriptor descr) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
@@ -455,8 +465,9 @@ public class BluetoothService extends Service {
      * @param characteristic Characteristic to act on.
      * @param enabled If true, enable notification.  False otherwise.
      */
+    @SuppressLint("MissingPermission")
     public boolean setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
-                                              boolean enabled) {
+                                                 boolean enabled) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return false;

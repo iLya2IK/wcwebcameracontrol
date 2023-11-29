@@ -28,6 +28,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.text.InputType;
 import com.sggdev.wcsdk.Log;
 import android.view.LayoutInflater;
@@ -247,7 +248,7 @@ public class DeviceConfigActivity extends Activity {
             mGattCharacteristics.addAll(res);
         }
 
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -291,7 +292,7 @@ public class DeviceConfigActivity extends Activity {
             }
         }, 3000);
 
-        mQueueHandler = new Handler();
+        mQueueHandler = new Handler(Looper.getMainLooper());
         mQueueHandler.postDelayed(new Runnable() {
             @Override
             public void run() {

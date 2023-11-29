@@ -19,8 +19,6 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
-import com.sggdev.wcsdk.Log;
 import android.view.ContextThemeWrapper;
 import android.widget.RemoteViews;
 
@@ -30,6 +28,7 @@ import androidx.core.content.ContextCompat;
 
 import com.sggdev.wcsdk.ChatDatabase;
 import com.sggdev.wcsdk.DeviceItem;
+import com.sggdev.wcsdk.Log;
 import com.sggdev.wcsdk.WCAppCommon;
 import com.sggdev.wcsdk.WCChat;
 import com.sggdev.wcsdk.WCHTTPClient;
@@ -56,7 +55,7 @@ public class WCApp extends WCAppCommon {
                 new ContextThemeWrapper(act, com.sggdev.wcsdk.R.style.AlertDialogCustom))
                 .setTitle(com.sggdev.wcsdk.R.string.alert_refused_connection)
                 .setMessage(msgTxt)
-                .setPositiveButton(android.R.string.yes, onPositive)
+                .setPositiveButton(R.string.yes, onPositive)
                 .setNegativeButton(android.R.string.cancel, null)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show()));

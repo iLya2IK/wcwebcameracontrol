@@ -1,18 +1,42 @@
 package com.sggdev.wcwebcameracontrol;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.BLUETOOTH;
+import static android.Manifest.permission.BLUETOOTH_ADMIN;
+import static android.Manifest.permission.BLUETOOTH_CONNECT;
+import static android.Manifest.permission.BLUETOOTH_SCAN;
+import static android.Manifest.permission.INTERNET;
+import static android.view.View.MeasureSpec.AT_MOST;
+import static android.view.View.MeasureSpec.makeMeasureSpec;
+import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM;
+import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_DEVICE;
+import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_SERVER_ITEM;
+import static com.sggdev.wcsdk.DeviceItem.DEFAULT_DEVICE_COLOR;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_CONNECTED;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_BY_USER;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_RETRY_OVER;
+import static com.sggdev.wcsdk.WCHTTPClient.CS_USER_CFG_INCORRECT;
+import static com.sggdev.wcsdk.WCRESTProtocol.JSON_DEVICE;
+import static com.sggdev.wcsdk.WCRESTProtocol.JSON_DEVICES;
+import static com.sggdev.wcsdk.WCRESTProtocol.JSON_META;
+import static com.sggdev.wcsdk.WCRESTProtocol.REST_RESPONSE_ERRORS;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_ADDRESS;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_HOST_NAME;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_INDEX;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_LST_SYNC;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
+import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
 
 import android.animation.Animator;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -23,12 +47,13 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Insets;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.DisplayMetrics;
-import com.sggdev.wcsdk.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
@@ -36,7 +61,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
@@ -45,6 +72,26 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.sggdev.wcsdk.BLEDeviceVariant;
+import com.sggdev.wcsdk.DeviceItem;
+import com.sggdev.wcsdk.Log;
+import com.sggdev.wcsdk.SampleGattAttributes;
+import com.sggdev.wcsdk.WCAppCommon;
+import com.sggdev.wcsdk.WCChat;
+import com.sggdev.wcsdk.WCHTTPClient;
+import com.sggdev.wcsdk.WCHTTPClientHolder;
+import com.sggdev.wcsdk.WCHTTPResync;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,44 +99,16 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.json.*;
-
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.Manifest.permission.BLUETOOTH;
-import static android.Manifest.permission.BLUETOOTH_ADMIN;
-import static android.Manifest.permission.INTERNET;
-import static android.view.View.MeasureSpec.AT_MOST;
-import static android.view.View.MeasureSpec.makeMeasureSpec;
-
-import com.sggdev.wcsdk.*;
-
-import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_BLE_ITEM;
-import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_DEVICE;
-import static com.sggdev.wcsdk.BLEDeviceVariant.DEVICE_VARIANT_SERVER_ITEM;
-import static com.sggdev.wcsdk.DeviceItem.DEFAULT_DEVICE_COLOR;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_ADDRESS;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_BLE_NAME;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_COLOR;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_HOST_NAME;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_INDEX;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_LST_SYNC;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_DEVICE_WRITE_ID;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_TARGET_DEVICE_ID;
-import static com.sggdev.wcwebcameracontrol.IntentConsts.EXTRAS_USER_DEVICE_ID;
-import static com.sggdev.wcsdk.WCHTTPClient.CS_CONNECTED;
-import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED;
-import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_BY_USER;
-import static com.sggdev.wcsdk.WCHTTPClient.CS_DISCONNECTED_RETRY_OVER;
-import static com.sggdev.wcsdk.WCHTTPClient.CS_USER_CFG_INCORRECT;
-import static com.sggdev.wcsdk.WCRESTProtocol.*;
-
 public class MainActivity extends AppCompatActivity {
     private static final int STATE_DEVICE_LISTING = 0;
     private static final int STATE_DEVICE_CONFIG = 1;
     private static final int STATE_DEVICE_CHAT = 2;
     private static final int STATE_MAIN_CONFIG = 3;
     private WCApp myApp;
-    private WCAppCommon.DevicesHolderList DevList() { return  myApp.getDevicesHolderList(); }
+
+    private WCAppCommon.DevicesHolderList DevList() {
+        return myApp.getDevicesHolderList();
+    }
 
     public static final String ACTION_LAUNCH_CHAT = "ACTION_LAUNCH_CHAT";
     public static final String ACTION_LAUNCH_CONFIG = "ACTION_LAUNCH_CONFIG";
@@ -123,17 +142,17 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton mUserConnect;
     private TextView mUserName;
     private TextView mBLEText;
-    private Handler handlerBLEScan;
+    private Handler handlerBLEScan = null;
     private SwipeRefreshLayout mSRL;
 
     private static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 1002;
     private boolean ENABLED_INTERNET_FEATURE = false;
     private boolean ENABLED_BLE_FEATURE = false;
-    private boolean ENABLED_ALARM_FEATURE = false;
 
     private final ScanCallback leScanCallback =
-            new ScanCallback () {
+            new ScanCallback() {
                 @Override
+                @SuppressLint("MissingPermission")
                 public void onScanResult(final int callbackType, final ScanResult result) {
                     super.onScanResult(callbackType, result);
                     runOnUiThread(() -> {
@@ -231,20 +250,17 @@ public class MainActivity extends AppCompatActivity {
 
     private class SynchroTask extends TimerTask {
 
-        @TargetApi(23)
+        @SuppressLint("MissingPermission")
         void startBLEScaning() {
-            if(Build.VERSION.SDK_INT >= 23) {
-                ScanSettings scanSettings = new ScanSettings.Builder()
-                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                        .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-                        .build();
-                bluetoothAdapter.getBluetoothLeScanner().startScan(null, scanSettings, leScanCallback);
-            } else {
-                bluetoothAdapter.getBluetoothLeScanner().startScan(leScanCallback);
-            }
+            ScanSettings scanSettings = new ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                    .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                    .build();
+            bluetoothAdapter.getBluetoothLeScanner().startScan(null, scanSettings, leScanCallback);
         }
 
+        @SuppressLint("MissingPermission")
         public void run() {
             httpServerCooldown -= DEVICE_SYNC_PERIOD;
             if (httpServerCooldown < 0) httpServerCooldown = 0;
@@ -346,6 +362,7 @@ public class MainActivity extends AppCompatActivity {
         syntimer = new Timer();
     }
 
+    @SuppressLint("MissingPermission")
     private void cancelSearchBLE() {
         if (bleScannerState == BS_SCANNING) {
             bluetoothAdapter.getBluetoothLeScanner().stopScan(leScanCallback);
@@ -403,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        handlerBLEScan = new Handler();
+        handlerBLEScan = new Handler(Looper.getMainLooper());
 
         mAvailableDevices = new DeviceVariantList();
         for (DeviceItem di : DevList()) {
@@ -509,7 +526,7 @@ public class MainActivity extends AppCompatActivity {
                                 new ContextThemeWrapper(MainActivity.this, R.style.AlertDialogCustom))
                                 .setTitle(R.string.disconnect_user)
                                 .setMessage(R.string.disconnect_request)
-                                .setPositiveButton(android.R.string.yes, (dialog, which) -> WCHTTPClientHolder.getInstance(MainActivity.this).disconnectByUser())
+                                .setPositiveButton(R.string.yes, (dialog, which) -> WCHTTPClientHolder.getInstance(MainActivity.this).disconnectByUser())
                                 .setNegativeButton(android.R.string.cancel, null)
                                 .setIcon(android.R.drawable.ic_dialog_alert)
                                 .show();
@@ -536,12 +553,12 @@ public class MainActivity extends AppCompatActivity {
         if ((chatToLaunch != null) && (chatToLaunch.length() > 0)) {
             final DeviceItem dev = myApp.getDevicesHolderList().findItem(myApp.getHttpCfgFullUserName(), chatToLaunch);
             if (dev != null) {
-                new Handler().postDelayed(() -> runOnUiThread(() -> launchDeviceChat(dev)), 1000);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> runOnUiThread(() -> launchDeviceChat(dev)), 1000);
             }
         } else {
             String confToLaunch = intent.getStringExtra(ACTION_LAUNCH_CONFIG);
             if ((confToLaunch != null) && (confToLaunch.length() > 0)) {
-                new Handler().postDelayed(() -> runOnUiThread(this::launchMainConfig), 1000);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> runOnUiThread(this::launchMainConfig), 1000);
             }
         }
     }
@@ -601,6 +618,7 @@ public class MainActivity extends AppCompatActivity {
         checkPermissions();
     }
 
+    @SuppressLint("MissingPermission")
     private void restartScanMode() {
         ACTIVITY_STATE = STATE_DEVICE_LISTING;
 
@@ -623,7 +641,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopTimer() {
-        handlerBLEScan.removeCallbacksAndMessages(null);
+        if (handlerBLEScan != null)
+            handlerBLEScan.removeCallbacksAndMessages(null);
         cancelSearchBLE();
 
         if (syntask != null)
@@ -764,6 +783,25 @@ public class MainActivity extends AppCompatActivity {
             mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.connected));
         else
             mUserConnect.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.disconnected));
+    }
+
+    public static WindowMetrics getWindowMetrics(@NonNull Activity activity) {
+        return activity.getWindowManager().getCurrentWindowMetrics();
+    }
+
+    public static int getWindowWidth(@NonNull WindowMetrics metrics) {
+        Insets insets = metrics.getWindowInsets()
+                .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+        return metrics.getBounds().width() - insets.left - insets.right;
+    }
+
+    public static float getWindowRatio(@NonNull WindowMetrics metrics) {
+        Insets insets = metrics.getWindowInsets()
+                .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+        int width = metrics.getBounds().width() - insets.left - insets.right;
+        int height = metrics.getBounds().height() - insets.top - insets.bottom;
+
+        return (float) height / (float) width;
     }
 
     private class DeviceAdapter extends ArrayAdapter<BLEDeviceVariant> {
@@ -908,12 +946,9 @@ public class MainActivity extends AppCompatActivity {
                     img_cfg.setVisibility(View.GONE);
             }
 
-            Display disp = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
-            int flags = disp.getFlags();
-            DisplayMetrics dmetr = new DisplayMetrics();
-            disp.getMetrics(dmetr);
-            float ratio = (float)dmetr.heightPixels / (float)dmetr.widthPixels;
-            if (((flags & Display.FLAG_ROUND) != 0) || (Math.abs(ratio - 1f) < 0.1f)) {
+            WindowMetrics disp = getWindowMetrics(MainActivity.this);
+            float ratio = getWindowRatio(disp);//(float)dmetr.heightPixels / (float)dmetr.widthPixels;
+            if ((disp.getWindowInsets().isRound()) || (Math.abs(ratio - 1f) < 0.1f)) {
                 float centerOffset = ((float) convertView.getHeight() / 2.0f) / (float) parent.getHeight();
                 float yRelativeToCenterOffset = (convertView.getY() / parent.getHeight()) + centerOffset;
 
@@ -937,6 +972,10 @@ public class MainActivity extends AppCompatActivity {
         permissions.add(INTERNET);
         permissions.add(BLUETOOTH);
         permissions.add(BLUETOOTH_ADMIN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions.add(BLUETOOTH_SCAN);
+            permissions.add(BLUETOOTH_CONNECT);
+        }
 
         List<String> listPermissionsNeeded = new ArrayList<>();
         for (String permission : permissions) {
@@ -980,6 +1019,8 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case BLUETOOTH:
                         case BLUETOOTH_ADMIN:
+                        case BLUETOOTH_CONNECT:
+                        case BLUETOOTH_SCAN:
                             bleEnable = false;
                             break;
                     }
@@ -1113,6 +1154,7 @@ public class MainActivity extends AppCompatActivity {
             return nitem;
         }
 
+        @SuppressLint("MissingPermission")
         public void add(BluetoothDevice bleDevice) {
             lock();
             try {
