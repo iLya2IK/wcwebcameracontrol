@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/interpolator-v21/mtrl_linear_out_slow_in.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/interpolator-v21/mtrl_linear_out_slow_in.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/interpolator-v21/mtrl_fast_out_slow_in.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/interpolator-v21/mtrl_fast_out_slow_in.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/interpolator-v21/mtrl_fast_out_linear_in.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/interpolator-v21/mtrl_fast_out_linear_in.xml"
+    }
+]

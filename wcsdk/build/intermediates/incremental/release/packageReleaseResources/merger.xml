@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res"/><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\build\generated\res\rs\release"/><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\build\generated\res\resValues\release"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res"><file name="blinker" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\animator\blinker.xml" qualifiers="" type="animator"/><file name="connecting_female" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\animator\connecting_female.xml" qualifiers="" type="animator"/><file name="connecting_male" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\animator\connecting_male.xml" qualifiers="" type="animator"/><file name="scaling" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\animator\scaling.xml" qualifiers="" type="animator"/><file name="scaling2" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\animator\scaling2.xml" qualifiers="" type="animator"/><file name="scaling3" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\animator\scaling3.xml" qualifiers="" type="animator"/><file name="an_connecting" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\an_connecting.xml" qualifiers="" type="drawable"/><file name="an_connecting_fail_no_device" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\an_connecting_fail_no_device.xml" qualifiers="" type="drawable"/><file name="an_connecting_fail_no_gatt" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\an_connecting_fail_no_gatt.xml" qualifiers="" type="drawable"/><file name="an_connecting_fail_no_sent" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\an_connecting_fail_no_sent.xml" qualifiers="" type="drawable"/><file name="an_sending" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\an_sending.xml" qualifiers="" type="drawable"/><file name="button" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\button.xml" qualifiers="" type="drawable"/><file name="button_disabled" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\button_disabled.xml" qualifiers="" type="drawable"/><file name="button_enabled" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\button_enabled.xml" qualifiers="" type="drawable"/><file name="button_focused" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\button_focused.xml" qualifiers="" type="drawable"/><file name="button_pressed" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\button_pressed.xml" qualifiers="" type="drawable"/><file name="connected" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\connected.png" qualifiers="" type="drawable"/><file name="date_label_background" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\date_label_background.xml" qualifiers="" type="drawable"/><file name="date_label_background_stamp" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\date_label_background_stamp.xml" qualifiers="" type="drawable"/><file name="disconnected" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\disconnected.png" qualifiers="" type="drawable"/><file name="header_line" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\header_line.xml" qualifiers="" type="drawable"/><file name="ic_baseline_delete_24" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_baseline_delete_24.xml" qualifiers="" type="drawable"/><file name="ic_baseline_delete_outline_24" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_baseline_delete_outline_24.xml" qualifiers="" type="drawable"/><file name="ic_baseline_keyboard_arrow_down_24" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_baseline_keyboard_arrow_down_24.xml" qualifiers="" type="drawable"/><file name="ic_baseline_params_add_24" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_baseline_params_add_24.xml" qualifiers="" type="drawable"/><file name="ic_ble_device" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_ble_device.xml" qualifiers="" type="drawable"/><file name="ic_ble_searching" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_ble_searching.xml" qualifiers="" type="drawable"/><file name="ic_cfg_wifi_ssid" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_cfg_wifi_ssid.xml" qualifiers="" type="drawable"/><file name="ic_connected" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_connected.xml" qualifiers="" type="drawable"/><file name="ic_default_device" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_default_device.xml" qualifiers="" type="drawable"/><file name="ic_host" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_host.xml" qualifiers="" type="drawable"/><file name="ic_launcher_foreground" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_launcher_foreground.xml" qualifiers="" type="drawable"/><file name="ic_ok_sym" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_ok_sym.xml" qualifiers="" type="drawable"/><file name="ic_play_stream" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_play_stream.xml" qualifiers="" type="drawable"/><file name="ic_sending" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_sending.xml" qualifiers="" type="drawable"/><file name="ic_skip" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_skip.xml" qualifiers="" type="drawable"/><file name="ic_user" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_user.xml" qualifiers="" type="drawable"/><file name="ic_wait_sym" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\ic_wait_sym.xml" qualifiers="" type="drawable"/><file name="image_chat_border" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\image_chat_border.xml" qualifiers="" type="drawable"/><file name="image_outline" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\image_outline.xml" qualifiers="" type="drawable"/><file name="round_button" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\round_button.xml" qualifiers="" type="drawable"/><file name="round_button_disabled" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\round_button_disabled.xml" qualifiers="" type="drawable"/><file name="round_button_enabled" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\round_button_enabled.xml" qualifiers="" type="drawable"/><file name="round_button_focused" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\round_button_focused.xml" qualifiers="" type="drawable"/><file name="round_button_pressed" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\round_button_pressed.xml" qualifiers="" type="drawable"/><file name="separator_shape" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\separator_shape.xml" qualifiers="" type="drawable"/><file name="shape_bg_incoming_msg" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\shape_bg_incoming_msg.xml" qualifiers="" type="drawable"/><file name="shape_bg_outgoing_msg" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\shape_bg_outgoing_msg.xml" qualifiers="" type="drawable"/><file name="table_border" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\drawable\table_border.xml" qualifiers="" type="drawable"/><file name="ic_launcher" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\mipmap-anydpi-v26\ic_launcher.xml" qualifiers="anydpi-v26" type="mipmap"/><file name="ic_launcher_round" path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\mipmap-anydpi-v26\ic_launcher_round.xml" qualifiers="anydpi-v26" type="mipmap"/><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\arrays.xml" qualifiers=""><string-array name="reply_entries">
+        <item>Reply</item>
+        <item>Reply to all</item>
+    </string-array><string-array name="reply_values">
+        <item>reply</item>
+        <item>reply_all</item>
+    </string-array></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\attrs.xml" qualifiers=""><declare-styleable name="FullscreenAttrs">
+        <attr format="color" name="fullscreenBackgroundColor"/>
+        <attr format="color" name="fullscreenTextColor"/>
+    </declare-styleable></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\colors.xml" qualifiers=""><color name="colorPrimary">#3e3e3e</color><color name="colorPrimaryDark">#3e3e3e</color><color name="colorAccent">#c0e0e0</color><color name="colorTextLight">#c0c0c0</color><color name="colorText">#dedede</color><color name="red">#de5555</color><color name="colorTextSecondary">#aaaaaa</color><color name="colorValueString">#99ec99</color><color name="colorValueInt">#aaaaff</color><color name="colorValueFloat">#99ccff</color><color name="colorValueBool">#ed88aa</color><color name="buttonColor">#5f5f5f</color><color name="buttonColorAlpha50">#7f5f5f5f</color><color name="incomingMsgBg">#5f5f5f</color><color name="outgoingMsgBg">#4f4f6f</color><color name="black_overlay">#66000000</color></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\dimens.xml" qualifiers=""><dimen name="box_inset_layout_padding">0dp</dimen><dimen name="inner_frame_layout_padding">5dp</dimen><dimen name="fab_margin">16dp</dimen><dimen name="corner_radius">4dp</dimen></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\ic_launcher_background.xml" qualifiers=""><color name="ic_launcher_background">#000000</color></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\strings.xml" qualifiers=""><string name="app_name" translatable="false">WC Web Camera Control</string><string name="connect">Connect</string><string name="hello_world">Hello Square World!</string><string name="connected">Connected</string><string name="disconnected">Disconnected</string><string name="no_data">
+    <![CDATA[ <nothing> ]]>
+    </string><string name="label_state">State:</string><string name="label_data">Data:</string><string name="label_device_address">Device address:</string><string name="menu_connect">Connect</string><string name="menu_disconnect">Disconnect</string><string name="unknown_service">Unknown service</string><string name="unknown_characteristic">Unknown characteristic</string><string name="searching_ble">Searching...</string><string name="ble_not_found">Not found</string><string name="ble_founded">Founded %d devices</string><string name="account_header">Account</string><string name="hostname_title">Host name</string><string name="username_title">User name</string><string name="password_title">Password</string><string name="device_name_title">Device name</string><string name="ssid_title">WiFi SSID</string><string name="ssid_password_title">WiFi password</string><string name="title_activity_main_config" translatable="false">MainConfigActivity</string><string name="attachment_summary_off">Only download attachments when manually requested</string><string name="rest_error">REST error code (%d) - %s</string><string name="alert_edit_config">Unable to connect to the server. Check the user settings. Edit the configuration?</string><string name="alert_refused_connection">Refused connection</string><string name="no_details">no details</string><string name="details_prefix">\n\nDetails:\n</string><string name="disconnect_user">Disconnect user</string><string name="disconnect_request">Do you want to disable the client connection to the server?</string><string name="default_from_account">Set from account config</string><string name="title_activity_device_chat" translatable="false">DeviceChatActivity</string><string name="first_fragment_label" translatable="false">First Fragment</string><string name="second_fragment_label" translatable="false">Second Fragment</string><string name="next">Next</string><string name="previous">Previous</string><string name="hello_first_fragment">Hello first fragment</string><string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string><string name="enter_command">Enter Command</string><string name="send">Send</string><string name="title_activity_image_view_fullscreen" translatable="false">ImageViewFullscreenActivity</string><string name="title_activity_stream_fullscreen" translatable="false">StreamFullscreenActivity</string><string name="dummy_button">Dummy Button</string><string name="dummy_content">DUMMY\nCONTENT</string><string name="channel_name" translatable="false">WC Web Camera Control</string><string name="channel_description">To show new messages and media records</string><string name="skip">Skip</string><string name="new_messages">New messages</string><string name="messages_from">%d messages from %s</string><string name="messages_from_devices">%d messages from %d devices</string><string name="err_connect_to_server">Can\'t connect to server</string><string name="err_connect_message">Problems with network or wrong configuration. %s</string><string name="err_wrong_config_message">Wrong configuration. %s</string><string name="media_captured">Media captured</string><string name="default_ssid">Default ssid</string><string name="choose_ssid">Choose ssid</string></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\styles.xml" qualifiers=""><style name="button" parent="@style/Widget.AppCompat.ImageButton">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style><style name="round_button" parent="@style/Widget.AppCompat.ImageButton">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/round_button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style><style name="AlertButton" parent="android:Widget.DeviceDefault.Button">
+        <item name="android:gravity">center_vertical|center_horizontal</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:background">@drawable/button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style><style name="AlertTitle" parent="@style/Base.DialogWindowTitle.AppCompat">
+        <item name="android:background">@drawable/header_line</item>
+        <item name="android:padding">10dp</item>
+    </style><style name="AlertDialogCustom" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:background">@color/buttonColor</item>
+        <item name="android:windowBackground">@drawable/button_enabled</item>
+        <item name="android:windowTitleStyle">@style/AlertTitle</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textColorPrimary">@color/colorText</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondary</item>
+        <item name="android:textColorTertiary">@color/colorAccent</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textSize">14sp</item>
+        <item name="buttonBarButtonStyle">@style/AlertButton</item>
+    </style><style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        
+        <item name="alertDialogTheme">@style/AlertDialogCustom</item>
+        <item name="materialAlertDialogTheme">@style/AlertDialogCustom</item>
+        <item name="android:windowBackground">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorSecondary">@color/colorPrimary</item>
+        <item name="colorSecondaryVariant">@color/colorPrimary</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textColorPrimary">@color/colorText</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondary</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:buttonStyle">@style/button</item>
+        <item name="android:textColorHint">@color/buttonColor</item>
+    </style><style name="AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/><style name="PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/><style name="params_table">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">6dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingEnd">6dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:maxWidth">280dp</item>
+        <item name="android:textColor">@color/colorText</item>
+    </style><style name="chat_date">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">32dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:background">@drawable/date_label_background</item>
+        <item name="android:textColor">@color/colorTextLight</item>
+    </style><style name="chat_text">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">16sp</item>
+    </style><style name="table_field_proto">
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:background">@drawable/table_border</item>
+    </style><style name="table_field" parent="table_field_proto">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+    </style><style name="table_value" parent="table_field_proto">
+        <item name="android:textColor">@color/colorTextSecondary</item>
+    </style><style name="table_string_field" parent="table_value">
+        <item name="android:textColor">@color/colorValueString</item>
+    </style><style name="table_int_field" parent="table_value">
+        <item name="android:textColor">@color/colorValueInt</item>
+    </style><style name="table_float_field" parent="table_value">
+        <item name="android:textColor">@color/colorValueFloat</item>
+    </style><style name="table_bool_field" parent="table_value">
+        <item name="android:textColor">@color/colorValueBool</item>
+    </style><style name="TextViewPrimary">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:textColor">@color/colorPrimary</item>
+    </style><style name="TextViewSecondary" parent="TextViewPrimary">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/colorTextSecondary</item>
+    </style><style name="Widget.AppTheme.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/black_overlay</item>
+    </style><style name="Widget.AppTheme.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">@color/black_overlay</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
+    </style></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values\themes.xml" qualifiers=""><style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style><style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/><style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/><style name="AppTheme.Fullscreen" parent="AppTheme">
+        <item name="android:actionBarStyle">@style/Widget.AppTheme.ActionBar.Fullscreen</item>
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowBackground">@null</item>
+    </style><style name="ThemeOverlay.WCWebCameraControl.FullscreenContainer" parent="">
+        <item name="fullscreenBackgroundColor">@color/incomingMsgBg</item>
+        <item name="fullscreenTextColor">@color/colorText</item>
+    </style></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values-land\dimens.xml" qualifiers="land"/><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values-ru\strings.xml" qualifiers="ru"><string name="connect">Соединиться</string><string name="hello_world">Hello Square World!</string><string name="connected">Подключено</string><string name="disconnected">Отключено</string><string name="no_data">
+    <![CDATA[ <nothing> ]]>
+    </string><string name="label_state">Состояние:</string><string name="label_data">Данные:</string><string name="label_device_address">Адрес устройства:</string><string name="menu_connect">Соединить</string><string name="menu_disconnect">Отключить</string><string name="unknown_service">Неизвестный сервис</string><string name="unknown_characteristic">Неизвестная характеристика</string><string name="searching_ble">Поиск...</string><string name="ble_not_found">Не найдено</string><string name="ble_founded">Найдено %d устройств</string><string name="account_header">Аккаунт</string><string name="hostname_title">Имя хоста</string><string name="username_title">Имя пользователя</string><string name="password_title">Пароль</string><string name="device_name_title">Имя устройства</string><string name="ssid_title">WiFi SSID</string><string name="ssid_password_title">WiFi пароль</string><string name="attachment_summary_off">Only download attachments when manually requested</string><string name="rest_error">REST код ошибки (%d) - %s</string><string name="alert_edit_config">Не могу соединиться с сервером. Проверьте настройки пользователя. Открыть настройки?</string><string name="alert_refused_connection">Соединение прервано</string><string name="no_details">нет подробностей</string><string name="details_prefix">\n\nПодробности:\n</string><string name="disconnect_user">Отсоединить пользователя</string><string name="disconnect_request">Вы ходите отключить пользователя от сервера?</string><string name="default_from_account">Установить как в настройках аккаунта</string><string name="next">Далее</string><string name="previous">Предыдущий</string><string name="hello_first_fragment">Hello first fragment</string><string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string><string name="enter_command">Введите команду</string><string name="send">Отправка</string><string name="dummy_button">Dummy Button</string><string name="dummy_content">DUMMY\nCONTENT</string><string name="channel_description">To show new messages and media records</string><string name="skip">Сброс</string><string name="new_messages">Новые сообщения</string><string name="messages_from">%d сообщений от %s</string><string name="messages_from_devices">%d сообщений от %d устройств(а)</string><string name="err_connect_to_server">Не могу подключиться к серверу</string><string name="err_connect_message">Ошибка сети или некорректная кофигурация. %s</string><string name="err_wrong_config_message">Некорректная конфигурация. %s</string><string name="media_captured">Захват медиа</string><string name="default_ssid">Текущий ssid</string><string name="choose_ssid">Выбор ssid</string></file><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values-w1240dp\dimens.xml" qualifiers="w1240dp-v13"/><file path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\main\res\values-w600dp\dimens.xml" qualifiers="w600dp-v13"/></source><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\build\generated\res\rs\release"/><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\build\generated\res\resValues\release"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="release$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\release\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="release" generated-set="release$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\AndroidStudioProjects\wcwebcameracontrol\wcsdk\src\release\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"/><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"/><mergedItems><configuration qualifiers=""><declare-styleable name="FullscreenAttrs">
+        <attr format="color" name="fullscreenBackgroundColor"/>
+        <attr format="color" name="fullscreenTextColor"/>
+    </declare-styleable></configuration></mergedItems></merger>

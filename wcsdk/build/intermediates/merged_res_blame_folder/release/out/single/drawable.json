@@ -1,0 +1,482 @@
+[
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_list_selector_background_transition_holo_dark.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_list_selector_background_transition_holo_dark.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/round_button.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/round_button.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_wait_sym.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_wait_sym.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_btn_radio_material_anim.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_btn_radio_material_anim.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/tooltip_frame_light.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/tooltip_frame_light.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_mtrl_checked_circle.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/ic_mtrl_checked_circle.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_launcher_foreground.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/separator_shape.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/separator_shape.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/image_chat_border.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/image_chat_border.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/image_outline.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/image_outline.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ic_ab_back_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ic_ab_back_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_textfield_search_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_textfield_search_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/date_label_background.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/date_label_background.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ratingbar_small_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ratingbar_small_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/notification_bg.xml",
+        "source": "com.sggdev.wcsdk-core-1.6.0-9:/drawable/notification_bg.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_radio_on_mtrl.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_radio_on_mtrl.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/button_pressed.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/button_pressed.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/round_button_enabled.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/round_button_enabled.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/round_button_focused.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/round_button_focused.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/round_button_disabled.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/round_button_disabled.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_item_background_holo_light.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_item_background_holo_light.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/an_connecting_fail_no_sent.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/an_connecting_fail_no_sent.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/notification_bg_low.xml",
+        "source": "com.sggdev.wcsdk-core-1.6.0-9:/drawable/notification_bg_low.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_ic_arrow_drop_up.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_ic_arrow_drop_up.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_baseline_delete_24.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_baseline_delete_24.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ic_clear_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ic_clear_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_connected.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_connected.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/material_ic_menu_arrow_up_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/material_ic_menu_arrow_up_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/material_ic_menu_arrow_down_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/material_ic_menu_arrow_down_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_radio_off_to_on_mtrl_animation.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_radio_off_to_on_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_btn_check_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_btn_check_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/table_border.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/table_border.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_user.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_user.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_mtrl_chip_checked_circle.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/ic_mtrl_chip_checked_circle.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_btn_check_material_anim.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_btn_check_material_anim.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_default_device.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_default_device.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_radio_on_to_off_mtrl_animation.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_radio_on_to_off_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_keyboard_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/ic_keyboard_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_cab_background_top_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_cab_background_top_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ratingbar_indicator_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ratingbar_indicator_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/notification_tile_bg.xml",
+        "source": "com.sggdev.wcsdk-core-1.6.0-9:/drawable/notification_tile_bg.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/connected.png",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/connected.png"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_dropdown_arrow.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_dropdown_arrow.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_mtrl_chip_close_circle.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/ic_mtrl_chip_close_circle.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/an_connecting.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/an_connecting.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/material_ic_edit_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/material_ic_edit_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_switch_thumb_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_switch_thumb_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_ble_device.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_ble_device.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/an_connecting_fail_no_device.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/an_connecting_fail_no_device.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/design_password_eye.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/design_password_eye.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_vector_test.xml",
+        "source": "com.sggdev.wcsdk-jetified-appcompat-resources-1.2.0-19:/drawable/abc_vector_test.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/material_ic_clear_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/material_ic_clear_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/design_ic_visibility.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/design_ic_visibility.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/disconnected.png",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/disconnected.png"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ic_voice_search_api_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ic_voice_search_api_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_sending.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_sending.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/material_ic_keyboard_arrow_right_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/material_ic_keyboard_arrow_right_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_baseline_delete_outline_24.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_baseline_delete_outline_24.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_tabs_default_indicator.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_tabs_default_indicator.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/design_ic_visibility_off.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/design_ic_visibility_off.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/button.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/button.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_ic_error.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_ic_error.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/notification_icon_background.xml",
+        "source": "com.sggdev.wcsdk-core-1.6.0-9:/drawable/notification_icon_background.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/test_custom_background.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/test_custom_background.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ic_go_search_api_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ic_go_search_api_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/header_line.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/header_line.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/button_focused.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/button_focused.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/navigation_empty_icon.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/navigation_empty_icon.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_checkbox_checked_mtrl.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_checkbox_checked_mtrl.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_mtrl_chip_checked_black.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/ic_mtrl_chip_checked_black.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/an_sending.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/an_sending.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_ble_searching.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_ble_searching.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_popupmenu_background.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_popupmenu_background.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/design_fab_background.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/design_fab_background.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/material_ic_keyboard_arrow_left_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/material_ic_keyboard_arrow_left_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_item_background_holo_dark.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_item_background_holo_dark.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_text_cursor_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_text_cursor_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_ok_sym.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_ok_sym.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_tab_indicator_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_tab_indicator_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_cfg_wifi_ssid.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_cfg_wifi_ssid.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_list_selector_holo_light.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_list_selector_holo_light.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/round_button_pressed.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/round_button_pressed.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/tooltip_frame_dark.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/tooltip_frame_dark.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_checkbox_unchecked_mtrl.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_checkbox_unchecked_mtrl.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_btn_default_mtrl_shape.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_btn_default_mtrl_shape.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_ic_arrow_drop_down.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_ic_arrow_drop_down.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/button_enabled.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/button_enabled.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_seekbar_tick_mark_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_seekbar_tick_mark_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/design_snackbar_background.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/design_snackbar_background.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_btn_radio_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_btn_radio_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/shape_bg_incoming_msg.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/shape_bg_incoming_msg.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ic_arrow_drop_right_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ic_arrow_drop_right_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/avd_show_password.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/avd_show_password.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ratingbar_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ratingbar_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_btn_borderless_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_btn_borderless_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_play_stream.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_play_stream.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/avd_hide_password.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/avd_hide_password.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_checkbox_checked_to_unchecked_mtrl_animation.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_checkbox_checked_to_unchecked_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_list_selector_background_transition_holo_light.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_list_selector_background_transition_holo_light.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_ic_cancel.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_ic_cancel.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/an_connecting_fail_no_gatt.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/an_connecting_fail_no_gatt.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/shape_bg_outgoing_msg.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/shape_bg_outgoing_msg.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ic_menu_overflow_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ic_menu_overflow_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_radio_off_mtrl.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_radio_off_mtrl.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/btn_checkbox_unchecked_to_checked_mtrl_animation.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/btn_checkbox_unchecked_to_checked_mtrl_animation.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_seekbar_thumb_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_seekbar_thumb_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/button_disabled.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/button_disabled.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/mtrl_dialog_background.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/mtrl_dialog_background.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_cab_background_internal_bg.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_cab_background_internal_bg.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_baseline_params_add_24.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_baseline_params_add_24.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_skip.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_skip.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/date_label_background_stamp.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/date_label_background_stamp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/material_ic_calendar_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/material_ic_calendar_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_seekbar_track_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_seekbar_track_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_baseline_keyboard_arrow_down_24.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_baseline_keyboard_arrow_down_24.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_ic_search_api_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_ic_search_api_material.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_host.xml",
+        "source": "com.sggdev.wcsdk-main-5:/drawable/ic_host.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_list_selector_holo_dark.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_list_selector_holo_dark.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/ic_clock_black_24dp.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/drawable/ic_clock_black_24dp.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/drawable/abc_spinner_textfield_background_material.xml",
+        "source": "com.sggdev.wcsdk-appcompat-1.2.0-18:/drawable/abc_spinner_textfield_background_material.xml"
+    }
+]

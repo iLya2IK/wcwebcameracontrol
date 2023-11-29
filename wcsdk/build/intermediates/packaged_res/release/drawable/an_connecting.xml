@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/ic_connected">
+    <target
+        android:name="male_body"
+        android:animation="@animator/connecting_male" />
+    <target
+        android:name="female_body"
+        android:animation="@animator/connecting_female" />
+    <target android:name="male_wire">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="pathData"
+                android:duration="600"
+                android:valueFrom="M1100,800L1500,800"
+                android:valueTo="M1100,800L1850,800"
+                android:valueType="pathType"
+                android:interpolator="@android:anim/linear_interpolator"/>
+        </aapt:attr>
+    </target>
+    <target android:name="male_body_fill">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="400"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:anim/linear_interpolator"/>
+        </aapt:attr>
+    </target>
+    <target android:name="female_wire">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="pathData"
+                android:duration="600"
+                android:valueFrom="M3304,820L2904,820"
+                android:valueTo="M3304,820L2564,820"
+                android:valueType="pathType"
+                android:interpolator="@android:anim/linear_interpolator"/>
+        </aapt:attr>
+    </target>
+    <target android:name="female_body_fill">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="400"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:anim/linear_interpolator"/>
+        </aapt:attr>
+    </target>
+    <target android:name="ok_ico">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:duration="600"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:anim/accelerate_interpolator"/>
+        </aapt:attr>
+    </target>
+    <target android:name="ok_ico_group">
+        <aapt:attr name="android:animation">
+            <set  android:ordering="sequentially">
+                <set android:ordering="together">
+                    <objectAnimator
+                        android:propertyName="scaleX"
+                        android:duration="500"
+                        android:valueFrom="0.05"
+                        android:valueTo="1.0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:anim/accelerate_interpolator"/>
+                    <objectAnimator
+                        android:propertyName="scaleY"
+                        android:duration="500"
+                        android:valueFrom="0.05"
+                        android:valueTo="1.0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:anim/accelerate_interpolator"/>
+                </set>
+                <set android:ordering="together">
+                    <objectAnimator
+                        android:propertyName="scaleX"
+                        android:duration="150"
+                        android:repeatCount="infinite"
+                        android:repeatMode="reverse"
+                        android:valueFrom="1.0"
+                        android:valueTo="1.1"
+                        android:valueType="floatType"
+                        android:interpolator="@android:anim/accelerate_interpolator"/>
+                    <objectAnimator
+                        android:propertyName="scaleY"
+                        android:duration="100"
+                        android:repeatCount="infinite"
+                        android:repeatMode="reverse"
+                        android:valueFrom="1.0"
+                        android:valueTo="1.2"
+                        android:valueType="floatType"
+                        android:interpolator="@android:anim/accelerate_interpolator"/>
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

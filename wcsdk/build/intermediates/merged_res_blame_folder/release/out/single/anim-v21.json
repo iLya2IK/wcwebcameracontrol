@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/anim-v21/design_bottom_sheet_slide_in.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/anim-v21/design_bottom_sheet_slide_in.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/anim-v21/mtrl_bottom_sheet_slide_in.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/anim-v21/mtrl_bottom_sheet_slide_in.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/anim-v21/mtrl_bottom_sheet_slide_out.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/anim-v21/mtrl_bottom_sheet_slide_out.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/anim-v21/design_bottom_sheet_slide_out.xml",
+        "source": "com.sggdev.wcsdk-material-1.4.0-20:/anim-v21/design_bottom_sheet_slide_out.xml"
+    },
+    {
+        "merged": "com.sggdev.wcsdk-merged_res-4:/anim-v21/fragment_fast_out_extra_slow_in.xml",
+        "source": "com.sggdev.wcsdk-fragment-1.2.0-17:/anim-v21/fragment_fast_out_extra_slow_in.xml"
+    }
+]
