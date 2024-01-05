@@ -186,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
                         .addOnFinishListener(new WCHTTPResync.OnSyncFinished() {
                             @Override
                             public boolean onNewMessagesSummary(Context context, int totalAmount, String lstSync, List<WCChat.DeviceMsgsCnt> aList) {
+                                myApp.setStatusIsConfigWrong(false);
                                 mAvailableDevices.lock();
                                 try {
                                     for (BLEDeviceVariant deviceVariant : mAvailableDevices)
@@ -217,10 +218,12 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onNoMessages(Context context) {
+                                myApp.setStatusIsConfigWrong(false);
                             }
 
                             @Override
                             public void onError(Context context, int state, String aError) {
+                                myApp.setStatusIsConfigWrong(true);
                             }
                         });
                 sync.doResync();

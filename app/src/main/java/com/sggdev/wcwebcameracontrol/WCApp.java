@@ -62,10 +62,12 @@ public class WCApp extends WCAppCommon {
     }
 
     public static WCHTTPResync.OnSyncFinished cStandardNotifier = new WCHTTPResync.OnSyncFinished() {
-        @SuppressLint("UnspecifiedImmutableFlag")
+
         private PendingIntent createOnDismissedIntent(Context context, int aNotificationId) {
             Intent skipIntent = new Intent(context, WCNotificationDismissedReceiver.class);
             skipIntent.setAction(WCNotificationDismissedReceiver.WC_SKIP);
+            skipIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            skipIntent.putExtra(WCHTTPResync.EXTRA_NOTIFICATION_ID, aNotificationId);
             return PendingIntent.getBroadcast(context, 0, skipIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         }
@@ -90,12 +92,16 @@ public class WCApp extends WCAppCommon {
                 myLogo.draw(canvas);
                 builder.setLargeIcon(bitmap);
             }
+            NotificationCompat.Action action =
+                    new NotificationCompat.Action.Builder(com.sggdev.wcsdk.R.drawable.ic_skip,
+                            context.getString(com.sggdev.wcsdk.R.string.skip),
+                                            skipPendingIntent)
+                            .build();
             builder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setDeleteIntent(skipPendingIntent)
                     .setDefaults(NotificationCompat.DEFAULT_ALL)
                     .setAutoCancel(true)
-                    .addAction(com.sggdev.wcsdk.R.drawable.ic_skip, context.getString(com.sggdev.wcsdk.R.string.skip),
-                            skipPendingIntent);
+                    .addAction(action);
             if (intent != null) {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP |
                         Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -165,9 +171,6 @@ public class WCApp extends WCAppCommon {
                     intent.putExtra(MainActivity.ACTION_LAUNCH_CHAT, "");
                 }
 
-                Log.d(TAG, "do notification");
-                Log.d(TAG, textContent);
-
                 NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationId, intent);
                 builder.setSmallIcon(devIcon)
                         .setContentTitle(textTitle)
@@ -187,6 +190,7 @@ public class WCApp extends WCAppCommon {
         @Override
         @SuppressLint("DefaultLocale")
         public void onNewMessages(Context context, List<WCChat.ChatMessage> aList, List<String> aDevices) {
+
             if (aList.size() > 1) return;
 
             WCChat.ChatMedia media = null;
@@ -329,6 +333,7 @@ public class WCApp extends WCAppCommon {
                     break;
                 }
             }
+
         }
     };
 
