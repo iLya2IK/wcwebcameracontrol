@@ -63,17 +63,18 @@ public class WCApp extends WCAppCommon {
 
     public static WCHTTPResync.OnSyncFinished cStandardNotifier = new WCHTTPResync.OnSyncFinished() {
 
-        private PendingIntent createOnDismissedIntent(Context context, int aNotificationId) {
+        private PendingIntent createOnDismissedIntent(Context context, int aNotificationId, boolean aNeedToRestart) {
             Intent skipIntent = new Intent(context, WCNotificationDismissedReceiver.class);
             skipIntent.setAction(WCNotificationDismissedReceiver.WC_SKIP);
             skipIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             skipIntent.putExtra(WCHTTPResync.EXTRA_NOTIFICATION_ID, aNotificationId);
+            skipIntent.putExtra(WCHTTPResync.EXTRA_NOTIFICATION_NEED_RESTART, aNeedToRestart);
             return PendingIntent.getBroadcast(context, 0, skipIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         }
 
-        private NotificationCompat.Builder initNotification(Context context, int notId, Intent intent) {
-            PendingIntent skipPendingIntent = createOnDismissedIntent(context, notId);
+        private NotificationCompat.Builder initNotification(Context context, int notId, boolean aNeedToRestart, Intent intent) {
+            PendingIntent skipPendingIntent = createOnDismissedIntent(context, notId, aNeedToRestart);
 
             NotificationCompat.Builder builder = WCHTTPResync.genNotifBuilder(context);
 
@@ -95,7 +96,7 @@ public class WCApp extends WCAppCommon {
             NotificationCompat.Action action =
                     new NotificationCompat.Action.Builder(com.sggdev.wcsdk.R.drawable.ic_skip,
                             context.getString(com.sggdev.wcsdk.R.string.skip),
-                                            skipPendingIntent)
+                            skipPendingIntent)
                             .build();
             builder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setDeleteIntent(skipPendingIntent)
@@ -171,7 +172,7 @@ public class WCApp extends WCAppCommon {
                     intent.putExtra(MainActivity.ACTION_LAUNCH_CHAT, "");
                 }
 
-                NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationId, intent);
+                NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationId, true, intent);
                 builder.setSmallIcon(devIcon)
                         .setContentTitle(textTitle)
                         .setContentText(textContent);
@@ -233,7 +234,7 @@ public class WCApp extends WCAppCommon {
             String devName = aDevices.get(0);
             Intent intent = new Intent(context, MainActivity.class);
             intent.putExtra(MainActivity.ACTION_LAUNCH_CHAT, devName);
-            NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationId, intent);
+            NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationId, true, intent);
 
             DeviceItem dev =
                     ((WCApp)context.getApplicationContext()).
@@ -303,10 +304,11 @@ public class WCApp extends WCAppCommon {
 
         @Override
         public void onError(Context context, int state, String aError) {
+            WCHTTPResync.stopWCHTTPBackgroundWork(context);
 
             Intent intent = new Intent(context, MainActivity.class);
             intent.putExtra(MainActivity.ACTION_LAUNCH_CONFIG, MainActivity.ACTION_LAUNCH_CONFIG);
-            NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationFailId, intent);
+            NotificationCompat.Builder builder = initNotification(context, WCHTTPResync.notificationFailId, false, intent);
             builder.setSmallIcon(android.R.drawable.ic_dialog_alert);
 
             switch (state) {
@@ -333,7 +335,6 @@ public class WCApp extends WCAppCommon {
                     break;
                 }
             }
-
         }
     };
 

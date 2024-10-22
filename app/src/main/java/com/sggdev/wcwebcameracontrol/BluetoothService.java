@@ -79,7 +79,7 @@ public class BluetoothService extends Service {
                                      int status) {
             if (status == GATT_SUCCESS) {
                 BluetoothGattCharacteristic characteristic = descriptor.getCharacteristic();
-                if (descriptor.getUuid().equals(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG)) {
+                if (descriptor.getUuid().equals(com.sggdev.wcsdk.SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG)) {
                     final byte[] data = descriptor.getValue();
                     if (data != null && data.length > 0) {
                         if (data[0] > 0) {
